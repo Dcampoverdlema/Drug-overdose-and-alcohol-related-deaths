@@ -21,7 +21,7 @@ library(knitr)
 health_data <- read.csv("data/analytic_data2024.csv") |> 
   clean_names()
 
-glimpse(health_data)
+#glimpse(health_data)
 ```
 
 
@@ -66,13 +66,16 @@ selected_data <- selected_data |>
 
 
 ```{r}
-selected_data <- selected_data |> 
-  drop_na()
+#selected_data <- selected_data |> 
+ # drop_na()
+selected_data |> 
+  mutate(across(everything(), ~ifelse(is.na(.) | . == 0, mean(., na.rm = TRUE), .)))
 ```
 
 
 ```{r}
-ggplot(selected_data, aes(x = unemployment_raw_value, y = drug_overdose_deaths_raw_value)) +
+selected_data |> 
+ggplot(aes(x = unemployment_raw_value, y = drug_overdose_deaths_raw_value)) +
   geom_point() +
   geom_smooth(method = "lm") +
   labs(title = "Unemployment vs Drug Overdose Deaths")
@@ -81,9 +84,11 @@ ggplot(selected_data, aes(x = unemployment_raw_value, y = drug_overdose_deaths_r
 
 ```{r}
 
-ggplot(selected_data, aes(x = income_inequality_raw_value, y = alcohol_impaired_driving_deaths_raw_value)) +
+selected_data |> 
+ggplot(aes(x = income_inequality_raw_value, y = alcohol_impaired_driving_deaths_raw_value)) +
   geom_point() +
   geom_smooth(method = "lm") +
   labs(title = "Income Inequality vs Alcohol-Impaired Driving Deaths")
+
 ```
 
