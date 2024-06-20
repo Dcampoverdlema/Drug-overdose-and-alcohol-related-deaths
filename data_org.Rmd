@@ -1,0 +1,44 @@
+---
+title: "testing"
+author: "Dennis Campoverde-Lema"
+date: "2024-06-19"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+library(tidyverse)
+library(readxl)
+
+```
+
+
+```{r}
+# List all sheet names in the Excel file
+sheet_names <- excel_sheets("data/2024_county_health_release_data_-_v1.xlsx")
+print(sheet_names)
+
+
+```
+
+
+```{r}
+health_measure_data <- read_excel("data/2024_county_health_release_data_-_v1.xlsx", sheet = "Select Measure Data")
+health_additional_data <- read_excel("data/2024_county_health_release_data_-_v1.xlsx", sheet = "Additional Measure Data")
+health_outcomes_factors <- read_excel("data/2024_county_health_release_data_-_v1.xlsx", sheet = "Health Outcomes & Factors")
+
+```
+
+
+```{r}
+combined_data <- bind_rows(health_additional_data, health_measure_data, health_outcomes_factors)
+
+# Save the combined data as a CSV file
+write_csv(combined_data, "data/combined_health_data.csv")
+
+```
+
