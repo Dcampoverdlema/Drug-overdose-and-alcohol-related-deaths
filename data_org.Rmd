@@ -77,7 +77,7 @@ imputed_data <- selected_data |>
 ```{r}
 imputed_data |> 
   filter(county_fips_code == "000") |> 
-  ggplot(aes(x = unemployment_raw_value, y = drug_overdose_deaths_raw_value, color = state_abbreviation)) +
+  ggplot(aes(x = adult_smoking_raw_value, y = drug_overdose_deaths_raw_value, color = state_abbreviation)) +
   geom_point() +
   geom_smooth(method = "lm") +
   labs(title = "Unemployment vs Drug Overdose Deaths",
@@ -93,7 +93,7 @@ imputed_data |>
 
 imputed_data |> 
   filter(county_fips_code == "000") |> 
-ggplot(aes(x = income_inequality_raw_value, y = alcohol_impaired_driving_deaths_raw_value, color = state_abbreviation)) +
+ggplot(aes(x = x_female_raw_value, y = alcohol_impaired_driving_deaths_raw_value, color = state_abbreviation)) +
   geom_point() +
   geom_smooth(method = "lm") +
   labs(title = "Income Inequality vs Alcohol-Impaired Driving Deaths")+
