@@ -1,0 +1,28 @@
+---
+title: "eda"
+author: "Jodie"
+date: "2024-06-21"
+output: html_document
+---
+
+```{r}
+head(selected_data)
+```
+
+## alcohol-impaired deaths
+
+```{r}
+data_by_state <- selected_data |>
+  filter(county_fips_code == "000")
+```
+
+## see the number of na's in the program (add these back)
+
+```{r}
+```
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
