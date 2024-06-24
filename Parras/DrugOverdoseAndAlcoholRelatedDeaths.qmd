@@ -1,0 +1,40 @@
+---
+title: "Drug overdose and alcohol related deaths"
+author: 
+- Dennis Campoverde-Lema
+- Samantha Parras 
+- Jodie Chen 
+date: "July 26, 2024"
+format: html
+      theme: cosmo 
+      html-math-method: katex
+    self-contained: true
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+## Introduction
+
+Are there demographic and social factors that are predictors of drug overdose and alcohol-related incidents (e.g., driving accidents)?
+
+## Data
+
+
+## Methods
+
+
+
+```{r} echo: false}
+
+```
+
+You can add options to executable code like this
+
+```{r}
+#| echo: false
+2 * 2
+```
+
+The `echo: false` option disables the printing of code (only output is displayed).

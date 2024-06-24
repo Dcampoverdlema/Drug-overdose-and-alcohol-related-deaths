@@ -1,0 +1,26 @@
+---
+title: "drug_od_graph"
+author: "Dennis Campoverde-Lema"
+date: "2024-06-21"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+imputed_data |> 
+  filter(county_fips_code == "000") |> 
+  ggplot(aes(x = adult_smoking_raw_value, y = drug_overdose_deaths_raw_value, color = state_abbreviation)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  labs(title = "Unemployment vs Drug Overdose Deaths",
+       x = "Unemployment Rate",
+       y = "Drug Overdose Deaths") +
+  theme_bw() +
+  theme(legend.position = "none") +
+  geom_text(aes(label = state_abbreviation), vjust = -0.5, hjust = 0.5)
+```
+
