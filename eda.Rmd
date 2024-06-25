@@ -9,9 +9,10 @@ output: html_document
 head(selected_data)
 ```
 
-## alcohol-impaired deaths
+## alcohol-impaired deaths by state
 
 ```{r}
+# aggregate by state 
 data_by_state <- selected_data |>
   filter(county_fips_code == "000")
 ```
