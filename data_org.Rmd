@@ -9,13 +9,20 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-
 ```{r}
 library(tidyverse)
 library(readxl)
 library(janitor)
-library(knitr)
+library(kableExtra)
 library(broom)
+library(glmnet)
+library(caret)
+library(corrr)
+library(ggcorrplot)
+library(corrplot)
+library(ggdendro)
+
+
 ```
 
 ```{r}
@@ -25,12 +32,10 @@ health_data <- read.csv("data/analytic_data2024.csv") |>
 #glimpse(health_data)
 ```
 
-
 ```{r}
 # Select relevant columns for the analysis
 selected_data <- health_data |> 
   select(
-    state_fips_code, county_fips_code, state_abbreviation, name,
     drug_overdose_deaths_raw_value, alcohol_impaired_driving_deaths_raw_value,
     unemployment_raw_value, income_inequality_raw_value, high_school_completion_raw_value, 
     adult_smoking_raw_value, excessive_drinking_raw_value, median_household_income_raw_value,
@@ -42,8 +47,6 @@ selected_data <- health_data |>
     x_non_hispanic_white_raw_value, x_not_proficient_in_english_raw_value, 
     x_female_raw_value, x_rural_raw_value
   )
-
-# Convert relevant columns to numeric
 selected_data <- selected_data |> 
   mutate(across(
     starts_with("drug_overdose_deaths_raw_value") | starts_with("alcohol_impaired_driving_deaths_raw_value") |
@@ -61,48 +64,90 @@ selected_data <- selected_data |>
     as.numeric
   ))
 
-
-
 ```
 
 
 ```{r}
-#selected_data <- selected_data |> 
- # drop_na()
 imputed_data <- selected_data |> 
   mutate(across(everything(), ~ifelse(is.na(.) | . == 0, mean(., na.rm = TRUE), .)))
+
+
 ```
 
 
+#Testing graph
 ```{r}
+# Plot: Unemployment vs Drug Overdose Deaths
 imputed_data |> 
-  filter(county_fips_code == "000") |> 
-  ggplot(aes(x = adult_smoking_raw_value, y = drug_overdose_deaths_raw_value, color = state_abbreviation)) +
+  ggplot(aes(x = unemployment_raw_value, y = drug_overdose_deaths_raw_value)) +
   geom_point() +
   geom_smooth(method = "lm") +
   labs(title = "Unemployment vs Drug Overdose Deaths",
        x = "Unemployment Rate",
        y = "Drug Overdose Deaths") +
   theme_bw() +
-  theme(legend.position = "none") +
-  geom_text(aes(label = state_abbreviation), vjust = -0.5, hjust = 0.5)
+  theme(legend.position = "none") 
+
+```
+
+
+#testing graph
+```{r}
+
+# Plot: Income Inequality vs Alcohol-Impaired Driving Deaths
+imputed_data |> 
+  ggplot(aes(x = income_inequality_raw_value, y = alcohol_impaired_driving_deaths_raw_value)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  labs(title = "Income Inequality vs Alcohol-Impaired Driving Deaths",
+       x = "Income Inequality",
+       y = "Alcohol-Impaired Driving Deaths") +
+  theme_bw() +
+  theme(legend.position = "none") 
+
+
 ```
 
 
 ```{r}
-
-imputed_data |> 
-  filter(county_fips_code == "000") |> 
-ggplot(aes(x = x_female_raw_value, y = alcohol_impaired_driving_deaths_raw_value, color = state_abbreviation)) +
-  geom_point() +
-  geom_smooth(method = "lm") +
-  labs(title = "Income Inequality vs Alcohol-Impaired Driving Deaths")+
-  theme_bw() +
-  theme(legend.position = "none") +
-  geom_text(aes(label = state_abbreviation), vjust = -0.5, hjust = 0.5)
+corr_simple <- function(data, sig = 0.5) {
+  # Convert data to numeric
+  df_cor <- data %>% mutate_if(is.character, as.factor)
+  df_cor <- df_cor %>% mutate_if(is.factor, as.numeric)
   
+  # Run a correlation and drop the insignificant ones
+  corr <- cor(df_cor)
+  
+  # Prepare to drop duplicates and correlations of 1     
+  corr[lower.tri(corr, diag = TRUE)] <- NA 
+  
+  # Drop perfect correlations
+  corr[corr == 1] <- NA 
+  
+  # Turn into a 3-column table
+  corr <- as.data.frame(as.table(corr))
+  
+  # Remove the NA values from above 
+  corr <- na.omit(corr) 
+  
+  # Select significant values  
+  corr <- subset(corr, abs(Freq) > sig) 
+  
+  # Sort by highest correlation
+  corr <- corr[order(-abs(corr$Freq)),] 
+  
+  # Print table
+  print(corr)
+  
+  # Turn corr back into matrix in order to plot with corrplot
+  mtx_corr <- reshape2::acast(corr, Var1 ~ Var2, value.var = "Freq")
+  
+  # Plot correlations visually
+  corrplot(mtx_corr, is.corr = FALSE, tl.col = "black", na.label = " ")
+}
 
 ```
+
 
 
 ```{r}
@@ -120,6 +165,7 @@ model_drug <- lm(drug_overdose_deaths_raw_value ~ unemployment_raw_value + incom
 summary(model_drug)
 
 ```
+
 
 
 ```{r}
@@ -140,21 +186,121 @@ summary(model_alcohol)
 
 ```
 
+```{r}
+# Filtered correlation matrix for alcohol-impaired driving deaths
+data_alcohol <- imputed_data 
+
+corr_simple(data_alcohol, sig = 0.5)
+
+
+```
+
+
 
 ```{r}
-# Interpretation and Discussion
-# Extract coefficients and p-values for Drug Overdose Deaths model
-drug_coefficients <- summary(model_drug)$coefficients
+# Compute correlation matrix
+cor_matrix <- imputed_data |> cor()
+
+# Compute distance matrix for hierarchical clustering
+cor_dist_matrix <- as.dist(1 - abs(cor_matrix))
+
+# Perform hierarchical clustering
+var_hc <- hclust(cor_dist_matrix, method = "complete")
+
+# Plot the dendrogram
+ggdendrogram(var_hc, rotate = TRUE, size = 2) +
+  labs(title = "Dendrogram of Variables Using Correlation Matrix",
+       x = "Variables",
+       y = "Height")
 
 ```
 
 
 ```{r}
-# Extract coefficients and p-values for Alcohol-Impaired Driving Deaths model
+# Compute correlation matrix
+cor_matrix_alcohol <- imputed_data |> select(-drug_overdose_deaths_raw_value) |> cor()
+
+# Compute distance matrix for hierarchical clustering
+cor_dist_matrix_alcohol <- as.dist(1 - abs(cor_matrix_alcohol))
+
+# Perform hierarchical clustering
+var_hc_alcohol <- hclust(cor_dist_matrix_alcohol, method = "complete")
+
+# Plot the dendrogram
+ggdendrogram(var_hc_alcohol, rotate = TRUE, size = 2) +
+  labs(title = "Dendrogram of Variables Using Correlation Matrix",
+       subtitle = "For Alcohol-Impaired Driving Deaths",
+       x = "Variables",
+       y = "Height")
+
+
+
+```
+
+
+
+```{r}
+# Compute correlation matrix
+cor_matrix_drug <- imputed_data |> select(-alcohol_impaired_driving_deaths_raw_value) |> cor()
+
+# Compute distance matrix for hierarchical clustering
+cor_dist_matrix_drug <- as.dist((1 - abs(cor_matrix_drug)))
+
+# Perform hierarchical clustering
+var_hc_drug <- hclust(cor_dist_matrix_drug, method = "complete")
+
+# Plot the dendrogram
+ggdendrogram(var_hc_drug, rotate = TRUE, size = 2) +
+  labs(title = "Dendrogram of Variables Using Correlation Matrix",
+       subtitle = "For Drug Overdose Deaths",
+       x = "Variables",
+       y = "Height")
+
+```
+
+
+```{r}
+#corrplot(cor(imputed_data))
+# imputed_data
+```
+
+#Linear Model
+```{r}
+# Linear model for Drug Overdose Deaths
+model_drug <- lm(drug_overdose_deaths_raw_value ~ ., data = imputed_data)
+drug_coefficients <- summary(model_drug)$coefficients
+
+# Linear model for Alcohol-Impaired Driving Deaths
+model_alcohol <- lm(alcohol_impaired_driving_deaths_raw_value ~ ., data = imputed_data)
 alcohol_coefficients <- summary(model_alcohol)$coefficients
 
 ```
 
+
+#Lasso and Ridge Regression
+```{r}
+# Prepare data for glmnet
+x <- model.matrix(drug_overdose_deaths_raw_value ~ ., imputed_data)[, -1]
+y_drug <- imputed_data$drug_overdose_deaths_raw_value
+y_alcohol <- imputed_data$alcohol_impaired_driving_deaths_raw_value
+
+# Lasso regression for Drug Overdose Deaths
+lasso_model_drug <- cv.glmnet(x, y_drug, alpha = 1)
+lasso_coefficients_drug <- coef(lasso_model_drug, s = "lambda.min")
+
+# Ridge regression for Drug Overdose Deaths
+ridge_model_drug <- cv.glmnet(x, y_drug, alpha = 0)
+ridge_coefficients_drug <- coef(ridge_model_drug, s = "lambda.min")
+
+# Lasso regression for Alcohol-Impaired Driving Deaths
+lasso_model_alcohol <- cv.glmnet(x, y_alcohol, alpha = 1)
+lasso_coefficients_alcohol <- coef(lasso_model_alcohol, s = "lambda.min")
+
+# Ridge regression for Alcohol-Impaired Driving Deaths
+ridge_model_alcohol <- cv.glmnet(x, y_alcohol, alpha = 0)
+ridge_coefficients_alcohol <- coef(ridge_model_alcohol, s = "lambda.min")
+
+```
 
 ```{r}
 # Display the coefficients and p-values
@@ -163,14 +309,28 @@ print(alcohol_coefficients)
 
 ```
 
-
 ```{r}
 # Reporting
 # Summary table of model coefficients
-kable(drug_coefficients, caption = "Drug Overdose Deaths Model Coefficients")
-kable(alcohol_coefficients, caption = "Alcohol-Impaired Driving Deaths Model Coefficients")
+# Coefficients for Drug Overdose Deaths models
+kable(as.matrix(drug_coefficients), caption = "Drug Overdose Deaths Model Coefficients") |> 
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+
+kable(as.matrix(lasso_coefficients_drug), caption = "Lasso Coefficients for Drug Overdose Deaths") |> 
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+
+kable(as.matrix(ridge_coefficients_drug), caption = "Ridge Coefficients for Drug Overdose Deaths") |> 
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+
+# Coefficients for Alcohol-Impaired Driving Deaths models
+kable(as.matrix(alcohol_coefficients), caption = "Alcohol-Impaired Driving Deaths Model Coefficients") |> 
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+
+kable(as.matrix(lasso_coefficients_alcohol), caption = "Lasso Coefficients for Alcohol-Impaired Driving Deaths") |> 
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+
+kable(as.matrix(ridge_coefficients_alcohol), caption = "Ridge Coefficients for Alcohol-Impaired Driving Deaths") |> 
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+
 
 ```
-
-
-
