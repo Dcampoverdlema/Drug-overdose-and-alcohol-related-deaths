@@ -9,7 +9,6 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-
 ```{r}
 library(tidyverse)
 library(readxl)
@@ -24,7 +23,6 @@ health_data <- read.csv("data/analytic_data2024.csv") |>
 
 #glimpse(health_data)
 ```
-
 
 ```{r}
 # Select relevant columns for the analysis
@@ -65,14 +63,12 @@ selected_data <- selected_data |>
 
 ```
 
-
 ```{r}
 #selected_data <- selected_data |> 
  # drop_na()
 imputed_data <- selected_data |> 
   mutate(across(everything(), ~ifelse(is.na(.) | . == 0, mean(., na.rm = TRUE), .)))
 ```
-
 
 ```{r}
 imputed_data |> 
@@ -87,7 +83,6 @@ imputed_data |>
   theme(legend.position = "none") +
   geom_text(aes(label = state_abbreviation), vjust = -0.5, hjust = 0.5)
 ```
-
 
 ```{r}
 
@@ -104,7 +99,6 @@ ggplot(aes(x = x_female_raw_value, y = alcohol_impaired_driving_deaths_raw_value
 
 ```
 
-
 ```{r}
 model_drug <- lm(drug_overdose_deaths_raw_value ~ unemployment_raw_value + income_inequality_raw_value + 
                  high_school_completion_raw_value + adult_smoking_raw_value + excessive_drinking_raw_value + 
@@ -120,7 +114,6 @@ model_drug <- lm(drug_overdose_deaths_raw_value ~ unemployment_raw_value + incom
 summary(model_drug)
 
 ```
-
 
 ```{r}
 # Fit a linear model for Alcohol-Impaired Driving Deaths
@@ -140,7 +133,6 @@ summary(model_alcohol)
 
 ```
 
-
 ```{r}
 # Interpretation and Discussion
 # Extract coefficients and p-values for Drug Overdose Deaths model
@@ -148,13 +140,11 @@ drug_coefficients <- summary(model_drug)$coefficients
 
 ```
 
-
 ```{r}
 # Extract coefficients and p-values for Alcohol-Impaired Driving Deaths model
 alcohol_coefficients <- summary(model_alcohol)$coefficients
 
 ```
-
 
 ```{r}
 # Display the coefficients and p-values
@@ -163,7 +153,6 @@ print(alcohol_coefficients)
 
 ```
 
-
 ```{r}
 # Reporting
 # Summary table of model coefficients
@@ -171,6 +160,3 @@ kable(drug_coefficients, caption = "Drug Overdose Deaths Model Coefficients")
 kable(alcohol_coefficients, caption = "Alcohol-Impaired Driving Deaths Model Coefficients")
 
 ```
-
-
-
