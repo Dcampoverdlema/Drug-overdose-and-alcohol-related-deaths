@@ -29,14 +29,11 @@ library(ggdendro)
 health_data <- read.csv("data/analytic_data2024.csv") |> 
   clean_names()
 
-<<<<<<< HEAD
-=======
 #glimpse(health_data)
 ```
 
 ```{r}
 # Select relevant columns for the analysis
->>>>>>> 9c85cd001f5616936740659464e2c5c438d3e910
 selected_data <- health_data |> 
   select(
     drug_overdose_deaths_raw_value, alcohol_impaired_driving_deaths_raw_value,
@@ -69,12 +66,7 @@ selected_data <- selected_data |>
 
 ```
 
-<<<<<<< HEAD
 
-
-
-=======
->>>>>>> 9c85cd001f5616936740659464e2c5c438d3e910
 ```{r}
 imputed_data <- selected_data |> 
   mutate(across(everything(), ~ifelse(is.na(.) | . == 0, mean(., na.rm = TRUE), .)))
@@ -82,10 +74,8 @@ imputed_data <- selected_data |>
 
 ```
 
-<<<<<<< HEAD
+
 #Testing graph
-=======
->>>>>>> 9c85cd001f5616936740659464e2c5c438d3e910
 ```{r}
 # Plot: Unemployment vs Drug Overdose Deaths
 imputed_data |> 
@@ -100,10 +90,8 @@ imputed_data |>
 
 ```
 
-<<<<<<< HEAD
+
 #testing graph
-=======
->>>>>>> 9c85cd001f5616936740659464e2c5c438d3e910
 ```{r}
 
 # Plot: Income Inequality vs Alcohol-Impaired Driving Deaths
@@ -119,6 +107,7 @@ imputed_data |>
 
 
 ```
+
 
 ```{r}
 corr_simple <- function(data, sig = 0.5) {
@@ -157,9 +146,9 @@ corr_simple <- function(data, sig = 0.5) {
   corrplot(mtx_corr, is.corr = FALSE, tl.col = "black", na.label = " ")
 }
 
-<<<<<<< HEAD
-=======
 ```
+
+
 
 ```{r}
 model_drug <- lm(drug_overdose_deaths_raw_value ~ unemployment_raw_value + income_inequality_raw_value + 
@@ -177,6 +166,8 @@ summary(model_drug)
 
 ```
 
+
+
 ```{r}
 # Fit a linear model for Alcohol-Impaired Driving Deaths
 model_alcohol <- lm(alcohol_impaired_driving_deaths_raw_value ~ unemployment_raw_value + income_inequality_raw_value + 
@@ -191,7 +182,6 @@ model_alcohol <- lm(alcohol_impaired_driving_deaths_raw_value ~ unemployment_raw
                     x_rural_raw_value, data = imputed_data)
 
 summary(model_alcohol)
->>>>>>> 9c85cd001f5616936740659464e2c5c438d3e910
 
 
 ```
@@ -286,11 +276,8 @@ alcohol_coefficients <- summary(model_alcohol)$coefficients
 
 ```
 
-<<<<<<< HEAD
 
 #Lasso and Ridge Regression
-=======
->>>>>>> 9c85cd001f5616936740659464e2c5c438d3e910
 ```{r}
 # Prepare data for glmnet
 x <- model.matrix(drug_overdose_deaths_raw_value ~ ., imputed_data)[, -1]
