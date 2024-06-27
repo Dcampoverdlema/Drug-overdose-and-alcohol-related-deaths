@@ -1,0 +1,77 @@
+---
+title: "Drugs"
+author: "Dennis Campoverde-Lema"
+date: "2024-06-27"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(readxl)
+library(janitor)
+library(kableExtra)
+library(broom)
+library(glmnet)
+library(caret)
+library(corrr)
+library(ggcorrplot)
+library(corrplot)
+library(ggdendro)
+library(ggplot2)
+
+```
+
+
+```{r}
+imputed_data <- read_csv("imputed_data.csv")
+```
+
+
+```{r}
+# Fit linear model for drug overdose deaths
+model_drug <- lm(drug_overdose_deaths_raw_value ~ ., data = imputed_data)
+summary_drug <- summary(model_drug)
+
+# Extract significant variables (p-value < 0.05)
+significant_vars_drug <- names(which(summary_drug$coefficients[,4] < 0.05))
+significant_vars_drug <- significant_vars_drug[significant_vars_drug != "(Intercept)"]
+
+# Print significant variables
+print(significant_vars_drug)
+
+```
+
+
+```{r}
+selected_data <- imputed_data |> 
+  select(
+    drug_overdose_deaths_raw_value, adult_smoking_raw_value, income_inequality_raw_value,
+    excessive_drinking_raw_value, median_household_income_raw_value, some_college_raw_value,
+    children_in_single_parent_households_raw_value, x_below_18_years_of_age_raw_value,
+    x_non_hispanic_white_raw_value
+  )
+
+cor_matrix <- cor(selected_data)
+
+corrplot(cor_matrix, method = "color", tl.col = "black", tl.cex = 0.8)
+
+cor_dist_matrix <- as.dist(1 - abs(cor_matrix))
+hc <- hclust(cor_dist_matrix, method = "complete")
+
+ggdendrogram(hc, rotate = TRUE, size = 2) +
+  labs(title = "Dendrogram of Variables Using Correlation Matrix",
+       x = "Variables",
+       y = "Height")
+
+```
+
+
+
+```{r}
+
+```
+
