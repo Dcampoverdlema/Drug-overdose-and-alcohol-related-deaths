@@ -27,6 +27,7 @@ library(ggdendro)
 
 ```{r}
 health_data <- read.csv("data/analytic_data2024.csv") |> 
+  slice(-1) |> 
   clean_names()
 
 #glimpse(health_data)
@@ -70,6 +71,8 @@ selected_data <- selected_data |>
 ```{r}
 imputed_data <- selected_data |> 
   mutate(across(everything(), ~ifelse(is.na(.) | . == 0, mean(., na.rm = TRUE), .)))
+# Save imputed data to CSV
+write.csv(imputed_data, "imputed_data.csv")
 
 
 ```
@@ -110,44 +113,47 @@ imputed_data |>
 
 
 ```{r}
-corr_simple <- function(data, sig = 0.5) {
-  # Convert data to numeric
-  df_cor <- data %>% mutate_if(is.character, as.factor)
-  df_cor <- df_cor %>% mutate_if(is.factor, as.numeric)
-  
-  # Run a correlation and drop the insignificant ones
-  corr <- cor(df_cor)
-  
-  # Prepare to drop duplicates and correlations of 1     
-  corr[lower.tri(corr, diag = TRUE)] <- NA 
-  
-  # Drop perfect correlations
-  corr[corr == 1] <- NA 
-  
-  # Turn into a 3-column table
-  corr <- as.data.frame(as.table(corr))
-  
-  # Remove the NA values from above 
-  corr <- na.omit(corr) 
-  
-  # Select significant values  
-  corr <- subset(corr, abs(Freq) > sig) 
-  
-  # Sort by highest correlation
-  corr <- corr[order(-abs(corr$Freq)),] 
-  
-  # Print table
-  print(corr)
-  
-  # Turn corr back into matrix in order to plot with corrplot
-  mtx_corr <- reshape2::acast(corr, Var1 ~ Var2, value.var = "Freq")
-  
-  # Plot correlations visually
-  corrplot(mtx_corr, is.corr = FALSE, tl.col = "black", na.label = " ")
-}
+# Fit linear models for alcohol-impaired driving deaths
+model_alcohol <- lm(alcohol_impaired_driving_deaths_raw_value ~ ., data = imputed_data)
+summary_alcohol <- summary(model_alcohol)
+
+# Extract significant variables (p-value < 0.05)
+significant_vars_alcohol <- names(which(summary_alcohol$coefficients[,4] < 0.05))
+significant_vars_alcohol <- significant_vars_alcohol[significant_vars_alcohol != "(Intercept)"]
+
+# Fit linear models for drug overdose deaths
+model_drug <- lm(drug_overdose_deaths_raw_value ~ ., data = imputed_data)
+summary_drug <- summary(model_drug)
+
+# Extract significant variables (p-value < 0.05)
+significant_vars_drug <- names(which(summary_drug$coefficients[,4] < 0.05))
+significant_vars_drug <- significant_vars_drug[significant_vars_drug != "(Intercept)"]
+
 
 ```
 
+```{r}
+# Create correlation matrix for significant variables related to alcohol-impaired driving deaths
+cor_matrix_alcohol <- imputed_data %>%
+  select(alcohol_impaired_driving_deaths_raw_value, all_of(significant_vars_alcohol)) %>%
+  cor()
+
+# Create correlation matrix for significant variables related to drug overdose deaths
+cor_matrix_drug <- imputed_data %>%
+  select(drug_overdose_deaths_raw_value, all_of(significant_vars_drug)) %>%
+  cor()
+
+# Plot correlation matrix for alcohol-impaired driving deaths
+ggcorrplot(cor_matrix_alcohol, hc.order = TRUE, type = "lower", lab = TRUE) +
+  labs(title = "Correlation Matrix for Significant Variables",
+       subtitle = "Related to Alcohol-Impaired Driving Deaths")
+
+# Plot correlation matrix for drug overdose deaths
+ggcorrplot(cor_matrix_drug, hc.order = TRUE, type = "lower", lab = TRUE) +
+  labs(title = "Correlation Matrix for Significant Variables",
+       subtitle = "Related to Drug Overdose Deaths")
+
+```
 
 
 ```{r}
