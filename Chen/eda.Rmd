@@ -5,26 +5,93 @@ date: "2024-06-21"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+```{r}
+colnames(selected_data)
 ```
 
 ## R Markdown
+
+```{r}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+library(tidyverse)
+library(readxl)
+library(janitor)
+library(knitr)
+library(broom)
+
+
+```
+
+```{r}
+health_data <- read.csv("data/analytic_data2024.csv") |> 
+  slice(-1) |>
+  clean_names()
+
+
+#glimpse(health_data)
+```
+
 
 This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
 
 When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
 
-```{r cars}
-summary(cars)
+```{r}
+# looking only at state now
+selected_data |>
+  filter(county_fips_code=='000')
 ```
 
 ## Including Plots
 
 You can also embed plots, for example:
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+```{r}
+# issue with git?
+# clustering analysis 
+# alcohol impaired driving deaths
+# x_female_raw_value is % female raw value 
+# Q: what does the numerator and denominator mean vs the raw value more generally
+# graphs that allow you to plot confidence intervals
+# error in plotting the histogram for below
+
+# for social factors--what amount median household income?
+selected_data |>
+  select(x_female_raw_value)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+```{r}
+health_data |>
+  select(population_raw_value, population_numerator, population_denominator)
+
+rawnum <- health_data |>
+  select(v051_numerator)
+
+```
+
+```{r}
+# Histogram for % Below 18 Years of Age
+ggplot(selected_data, aes(x = )) +
+  geom_histogram(bins = 50, fill = "blue", alpha = 0.7) +
+  labs(title = "Distribution of % Below 18 Years of Age", x = "% Below 18 Years of Age", y = "Frequency")
+
+# Histogram for % 65 and Older
+ggplot(selected_data, aes(x = x_65_and_older_raw_value)) +
+  geom_histogram(bins = 50, fill = "green", alpha = 0.7) +
+  labs(title = "Distribution of % 65 and Older", x = "% 65 and Older", y = "Frequency")
+
+# Boxplot for % Below 18 Years of Age
+ggplot(df, aes(x = "", y = v052_rawvalue)) +
+  geom_boxplot(fill = "blue", alpha = 0.7) +
+  labs(title = "Box Plot of % Below 18 Years of Age", y = "% Below 18 Years of Age")
+
+# Boxplot for % 65 and Older
+ggplot(df, aes(x = "", y = v053_rawvalue)) +
+  geom_boxplot(fill = "green", alpha = 0.7) +
+  labs(title = "Box Plot of % 65 and Older", y = "% 65 and Older")
+
+```
