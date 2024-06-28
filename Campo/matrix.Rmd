@@ -1,0 +1,37 @@
+```{r}
+library(tidyverse)
+library(readxl)
+library(janitor)
+library(kableExtra)
+library(broom)
+library(glmnet)
+library(caret)
+library(corrr)
+library(ggcorrplot)
+library(corrplot)
+library(ggdendro)
+library(ggplot2)
+library(factoextra)
+```
+
+
+```{r}
+imputed_data <- read_csv("imputed_data.csv") |> 
+    mutate(across(everything(), ~ifelse(is.na(.) | . == 0, mean(., na.rm = TRUE), .)))
+
+
+```
+
+
+```{r}
+correlation_matrix[lower.tri(correlation_matrix, diag = TRUE)] <- NA
+max_correlation <- max(abs(correlation_matrix), na.rm = TRUE)
+max_correlation_indices <- which(abs(correlation_matrix) == max_correlation, arr.ind = TRUE)
+
+#max_correlation_pair <- colnames(imputed_data)[max_correlation_indices[1,]]
+max_correlation_pair
+correlation_matrix
+```
+
+
+
