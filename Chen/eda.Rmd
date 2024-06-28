@@ -32,21 +32,92 @@ health_data <- read.csv("data/analytic_data2024.csv") |>
   clean_names()
 
 
+selected_data <- health_data |> 
+  select(
+    state_fips_code, county_fips_code, state_abbreviation, name,
+    drug_overdose_deaths_raw_value, alcohol_impaired_driving_deaths_raw_value,
+    unemployment_raw_value, income_inequality_raw_value, high_school_completion_raw_value, 
+    adult_smoking_raw_value, excessive_drinking_raw_value, median_household_income_raw_value,
+    some_college_raw_value, children_in_poverty_raw_value, children_in_single_parent_households_raw_value,
+    social_associations_raw_value, x_below_18_years_of_age_raw_value, 
+    x_65_and_older_raw_value, x_non_hispanic_black_raw_value, 
+    x_american_indian_or_alaska_native_raw_value, x_asian_raw_value, 
+    x_native_hawaiian_or_other_pacific_islander_raw_value, x_hispanic_raw_value, 
+    x_non_hispanic_white_raw_value, x_not_proficient_in_english_raw_value, 
+    x_female_raw_value, x_rural_raw_value, long_commute_driving_alone_raw_value, population_raw_value
+  )
+
+# Convert relevant columns to numeric
+selected_data <- selected_data |> 
+  mutate(across(
+    starts_with("drug_overdose_deaths_raw_value") | starts_with("alcohol_impaired_driving_deaths_raw_value") |
+    starts_with("unemployment_raw_value") | starts_with("income_inequality_raw_value") | 
+    starts_with("high_school_completion_raw_value") | starts_with("adult_smoking_raw_value") |
+    starts_with("excessive_drinking_raw_value") | starts_with("median_household_income_raw_value") |
+    starts_with("some_college_raw_value") | starts_with("children_in_poverty_raw_value") | 
+    starts_with("children_in_single_parent_households_raw_value") | 
+    starts_with("social_associations_raw_value") | starts_with("x_below_18_years_of_age_raw_value") | 
+    starts_with("x_65_and_older_raw_value") | starts_with("x_non_hispanic_black_raw_value") | 
+    starts_with("x_american_indian_or_alaska_native_raw_value") | starts_with("x_asian_raw_value") | 
+    starts_with("x_native_hawaiian_or_other_pacific_islander_raw_value") | starts_with("x_hispanic_raw_value") | 
+    starts_with("x_non_hispanic_white_raw_value") | starts_with("x_not_proficient_in_english_raw_value") | 
+    starts_with("x_female_raw_value") | starts_with("x_rural_raw_value") | starts_with("population_raw_value") | starts_with("long_commute_driving_alone_raw_value") | starts_with("traffic_volume_raw_value"),
+    as.numeric
+  ))
 #glimpse(health_data)
+glimpse(selected_data)
 ```
 
-
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+## analyzing by county level
 
 ```{r}
-# looking only at state now
-selected_data |>
-  filter(county_fips_code=='000')
+
+ggplot(selected_data, aes(x=population_raw_value)) +
+  geom_histogram(fill = "blue", color = "black") +
+  labs(title = "Histogram Example", x = "Values", y = "Frequency") +
+  theme_minimal()
+
+library(ggplot2)
+ggplot(selected_data, aes(x = population_raw_value, y = alcohol_impaired_driving_deaths_raw_value)) +
+  geom_point() +
+  scale_x_log10() + # plots on log scale
+  scale_y_continuous(labels=scales::percent_format()) +
+  labs(title = "Scatterplot Example", x = "population", y = "alcohol_impaired_deaths") +
+  theme_minimal()
+
 ```
 
-## Including Plots
+
+```{r}
+# looking at states only, filter by states 
+selected_data<-selected_data |>
+  filter(county_fips_code=="000")
+
+glimpse(selected_data)
+
+health_data |>
+  select(traffic_volume_raw_value)
+
+health_data |>
+  select(long_commute_driving_alone_raw_value) # ranges from 0 to 1 so percentage of people with long commute
+
+ggplot(health_data, aes(x=population_raw_value)) +
+  geom_histogram(bins = 50, fill = "blue", alpha = 0.7) +
+  labs(title = "Distribution of % Below 18 Years of Age", x = "% Below 18 Years of Age", y = "Frequency")
+```
+
+## check if we should include interaction term for age and gender
+```{r}
+# below age of 18: raw percentage of people below 18 years old in the state 
+# 65 and older raw value: raw percentage of peple 65 and older
+# alcohol-impaired driving deaths
+# excessive drinking raw value (percenatage)
+
+# see which state has the highest alcohol-impaired deaths
+
+ggplot(selected_data, aes(x=state_abbreviation, y=alcohol_impaired_driving_deaths_raw_value)) +
+  geom_bar(stat="identity")
+```
 
 You can also embed plots, for example:
 
