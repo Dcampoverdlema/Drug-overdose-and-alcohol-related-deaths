@@ -12,26 +12,101 @@ library(corrplot)
 library(ggdendro)
 library(ggplot2)
 library(factoextra)
+library(reshape2)
 ```
 
 
 ```{r}
 imputed_data <- read_csv("imputed_data.csv") |> 
-    mutate(across(everything(), ~ifelse(is.na(.) | . == 0, mean(., na.rm = TRUE), .)))
-
+    mutate(across(everything(), ~ifelse(is.na(.) | . == 0, mean(., na.rm = TRUE), .))) |> 
+  rename(
+    ID = ...1,
+    Drug_Overdose_Deaths = drug_overdose_deaths_raw_value,
+    Alcohol_Impaired_Driving_Deaths = alcohol_impaired_driving_deaths_raw_value,
+    Unemployment_Rate = unemployment_raw_value,
+    Income_Inequality = income_inequality_raw_value,
+    Highschool_Comp_Rate = high_school_completion_raw_value,
+    Adult_Smoking_Rate = adult_smoking_raw_value,
+    Excessive_Drinking_Rate = excessive_drinking_raw_value,
+    Median_House_Income = median_household_income_raw_value,
+    College_Education_Rate = some_college_raw_value,
+    Children_In_Poverty = children_in_poverty_raw_value,
+    Single_Parent_House = children_in_single_parent_households_raw_value,
+    Social_Associations = social_associations_raw_value,
+    Pop_Under_18 = x_below_18_years_of_age_raw_value,
+    Pop_Over_65 = x_65_and_older_raw_value,
+    NH_Black = x_non_hispanic_black_raw_value,
+    American_Or_Alaska_Native = x_american_indian_or_alaska_native_raw_value,
+    Asian_Pop = x_asian_raw_value,
+    Pacific_Islander = x_native_hawaiian_or_other_pacific_islander_raw_value,
+    Hispanic_Pop = x_hispanic_raw_value,
+    NH_White = x_non_hispanic_white_raw_value,
+    English_Profic = x_not_proficient_in_english_raw_value,
+    Female_Pop = x_female_raw_value,
+    Rural_Pop = x_rural_raw_value
+  )
+str(imputed_data)
 
 ```
 
 
 ```{r}
-correlation_matrix[lower.tri(correlation_matrix, diag = TRUE)] <- NA
-max_correlation <- max(abs(correlation_matrix), na.rm = TRUE)
-max_correlation_indices <- which(abs(correlation_matrix) == max_correlation, arr.ind = TRUE)
+cor_matrix <- cor(imputed_data |>
+                    select(-ID), use = "pairwise.complete.obs")
 
-#max_correlation_pair <- colnames(imputed_data)[max_correlation_indices[1,]]
-max_correlation_pair
-correlation_matrix
+# Plot the correlation matrix
+corr_plot <- ggcorrplot(cor_matrix, hc.order = TRUE, type = "lower", 
+                        lab = TRUE, lab_size = 3.5, tl.cex = 10, tl.srt = 45) +
+  labs(title = "Correlation Matrix") +  # Title for the plot
+  theme_minimal() +
+  theme(
+    text = element_text(family = "serif", size = 12),  # Uniform text style
+    plot.title = element_text(size = 18, face = "bold", hjust = 0.5),  # Centered and bold title
+    axis.text.x = element_text(angle = 45, hjust = 1, size = 10),  # Adjusted x-axis text for readability
+    axis.text.y = element_text(size = 10),  # Adjusted y-axis text for readability
+    axis.title = element_blank(),  # No axis titles
+    panel.background = element_rect(fill = "white", colour = "white"),  # White background for the panel
+    plot.background = element_rect(fill = "white", colour = "white"),  # White background for the plot
+    panel.grid.major = element_blank(),  # No major grid lines
+    panel.grid.minor = element_blank(),  # No minor grid lines
+    legend.position = "right"  # Position of the legend
+  )
+corr_plot
+
+
+ggsave("focused_correlation_plot.png", corr_plot, width = 12, height = 12, units = "in")
+
 ```
 
+
+
+
+```{r}
+data_cor_grapha <- imputed_data |> 
+  correlate(diagonal = 1) |> 
+  stretch() |> 
+  ggplot(aes(x,y, fill = r)) +
+  geom_tile() +
+    scale_fill_gradient2(low = "blue", high = "red", mid = "white", midpoint = 0, limit = c(-1, 1)) +
+  labs(title = "Correlation plot between Social and Demographic Variables") +
+  theme_minimal() +
+  theme(
+    text = element_text(family = "serif"),
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    axis.title = element_blank(),
+    panel.background = element_rect(fill = "white", colour = "white"),
+    plot.background = element_rect(fill = "white", colour = "white"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.text = element_text(size = 20),
+  )
+
+
+data_cor <- cor(imputed_data)
+data_cor_graph <- ggcorrplot(data_cor)
+
+ggsave("correlation_plota.png", data_cor_grapha, width = 18, height = 18, units = "in")
+
+```
 
 
