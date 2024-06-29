@@ -30,6 +30,7 @@ health_data <- read.csv("data/analytic_data2024.csv") |>
   slice(-1) |> 
   clean_names()
 
+
 #glimpse(health_data)
 ```
 
@@ -153,6 +154,8 @@ ggcorrplot(cor_matrix_drug, hc.order = TRUE, type = "lower", lab = TRUE) +
   labs(title = "Correlation Matrix for Significant Variables",
        subtitle = "Related to Drug Overdose Deaths")
 
+#ggsave deminsions amnd remove text
+
 ```
 
 
@@ -176,7 +179,7 @@ summary(model_drug)
 
 ```{r}
 # Fit a linear model for Alcohol-Impaired Driving Deaths
-model_alcohol <- lm(alcohol_impaired_driving_deaths_raw_value ~ unemployment_raw_value + income_inequality_raw_value + 
+model_alcohol <- lm(alcohol_impaired_driving_deaths_raw_value ~ unemployment_raw_value +income_inequality_raw_value + 
                     high_school_completion_raw_value + adult_smoking_raw_value + excessive_drinking_raw_value + 
                     median_household_income_raw_value + some_college_raw_value + children_in_poverty_raw_value + 
                     children_in_single_parent_households_raw_value + social_associations_raw_value + 

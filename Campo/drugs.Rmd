@@ -22,6 +22,8 @@ library(ggcorrplot)
 library(corrplot)
 library(ggdendro)
 library(ggplot2)
+library(factoextra)
+
 
 ```
 
@@ -45,9 +47,44 @@ print(significant_vars_drug)
 
 ```
 
+```{r}
+model_alcohol <- lm(alcohol_impaired_driving_deaths_raw_value ~ ., data = imputed_data)
+summary_alcohol <- summary(model_alcohol)
+
+# Extract significant variables (p-value < 0.05)
+significant_vars_alcohol <- names(which(summary_alcohol$coefficients[,4] < 0.05))
+significant_vars_alcohol <- significant_vars_alcohol[significant_vars_drug != "(Intercept)"]
+
+# Print significant variables
+print(significant_vars_alcohol)
+
+```
 
 ```{r}
-selected_data <- imputed_data |> 
+
+selected_data_a <- imputed_data |> 
+  select(
+    alcohol_impaired_driving_deaths_raw_value, adult_smoking_raw_value, x_below_18_years_of_age_raw_value,
+    x_female_raw_value, unemployment_raw_value, excessive_drinking_raw_value, x_65_and_older_raw_value
+  )
+
+cor_matrix <- cor(selected_data_a)
+
+corrplot(cor_matrix, method = "color", tl.col = "black", tl.cex = 0.8)
+
+cor_dist_matrix <- as.dist(1 - abs(cor_matrix))
+hc <- hclust(cor_dist_matrix, method = "complete")
+
+ggdendrogram(hc, rotate = TRUE, size = 2) +
+  labs(title = "Dendrogram of Variables Using Correlation Matrix",
+       x = "Variables",
+       y = "Height")
+```
+
+
+
+```{r}
+selected_data_d <- imputed_data |> 
   select(
     drug_overdose_deaths_raw_value, adult_smoking_raw_value, income_inequality_raw_value,
     excessive_drinking_raw_value, median_household_income_raw_value, some_college_raw_value,
@@ -69,9 +106,19 @@ ggdendrogram(hc, rotate = TRUE, size = 2) +
 
 ```
 
-
-
 ```{r}
+pca_result <- prcomp(selected_data_d, scale. = TRUE)
 
+# Visualize the PCA results using a biplot
+fviz_pca_biplot(pca_result, label = "var",
+                alpha.ind = 0.25, alpha.var = 0.75,
+                col.var = "purple", repel = TRUE) +
+  labs(title = "PCA Biplot",
+       subtitle = "Correlation of Variables with Drug Overdose Deaths",
+       x = "Principal Component 1",
+       y = "Principal Component 2") +
+  theme_minimal() +
+  theme(plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+        plot.subtitle = element_text(size = 12, hjust = 0.5))
 ```
 
