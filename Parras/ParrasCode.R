@@ -110,12 +110,24 @@ ggplot(data = merged_data, aes(x = long, y = lat, group = group)) +
 
 ggplot(data = merged_data, aes(x = long, y = lat, group = group)) +
   geom_polygon(aes(fill = alcohol_impaired_driving_deaths_raw_value), color = "white") +
-  scale_fill_viridis_c(option = "plasma", na.value = "grey50") +
+  scale_fill_viridis_c(option = "plasma", na.value = "grey50", labels = scales::percent_format(scale = 100)) +
   coord_fixed(1.3) +
-  theme(axis.title= element_blank(), 
-        axis.text=element_blank()) +
-  labs(title= "Alcohol Impaired Driving Deaths by State", 
-       fill="Alcohol Impaired Driving Deaths")
+  theme_minimal() +  # Apply the minimal theme
+  theme(
+    axis.title = element_blank(),
+    axis.text = element_blank(),
+    axis.ticks = element_blank(),  # Remove axis ticks
+    text = element_text(family = "serif"),  # Set global text family to serif
+    plot.title = element_text(hjust = 0.5, face = "bold", size = 14),  # Center, bold the title, and increase font size
+    plot.subtitle = element_text(hjust = 0.5, face = "plain", size = 8),  # Center the subtitle, normal weight, and reduce font size
+    plot.caption = element_text(face = "italic", size = 6, hjust = 0)  # Italicize, reduce font size of the caption, and left-align
+  ) +
+  labs(
+    title = "Alcohol Impaired Driving Deaths by State",
+    subtitle = "Data source: County Health Rankings & Roadmaps (https://www.countyhealthrankings.org/)",
+    fill = "*Alcohol Driving Deaths",
+    caption = "*Percentage of motor vehicle crash deaths with alcohol involvement."
+  )
 
 # taking a closer look at montana
 
