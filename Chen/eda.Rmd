@@ -43,8 +43,8 @@ selected_data <- health_data |>
     x_65_and_older_raw_value, x_non_hispanic_black_raw_value, 
     x_american_indian_or_alaska_native_raw_value, x_asian_raw_value, 
     x_native_hawaiian_or_other_pacific_islander_raw_value, x_hispanic_raw_value, 
-    x_non_hispanic_white_raw_value, x_not_proficient_in_english_raw_value, 
-    x_female_raw_value, x_rural_raw_value, long_commute_driving_alone_raw_value, population_raw_value
+    x_non_hispanic_white_raw_value, x_not_proficient_in_english_raw_value,
+    x_female_raw_value, x_rural_raw_value, long_commute_driving_alone_raw_value, population_raw_value, traffic_volume_raw_value
   )
 
 # Convert relevant columns to numeric
@@ -68,6 +68,12 @@ selected_data <- selected_data |>
 glimpse(selected_data)
 ```
 
+```{r}
+cor(selected_data)
+```
+
+## exploring x_non_hispanic_black_raw_value, children_in_single_parent_households_raw_value, and unemployment_raw_value 
+
 ## analyzing by county level
 
 ```{r}
@@ -79,14 +85,123 @@ ggplot(selected_data, aes(x=population_raw_value)) +
 
 library(ggplot2)
 ggplot(selected_data, aes(x = population_raw_value, y = alcohol_impaired_driving_deaths_raw_value)) +
-  geom_point() +
+  geom_point(color="darkred", size=2, alpha=0.5) +
+  geom_rug(alpha=0.4) +
   scale_x_log10() + # plots on log scale
   scale_y_continuous(labels=scales::percent_format()) +
-  labs(title = "Scatterplot Example", x = "population", y = "alcohol_impaired_deaths") +
+  labs(title = "Population vs alcohol_impaired_deaths", x = "population", y = "alcohol_impaired_deaths") +
   theme_minimal()
 
 ```
 
+```{r}
+library(GGally)
+
+renamed_data <- selected_data |>
+  select(
+    population = population_raw_value,
+    long_commute = long_commute_driving_alone_raw_value,
+    traffic_volume = traffic_volume_raw_value,
+    alcohol_deaths = alcohol_impaired_driving_deaths_raw_value
+  )
+
+renamed_data |>
+  ggpairs() +
+  scale_x_log10() 
+
+  
+
+# selected_data |>
+#   select(population_raw_value, long_commute_driving_alone_raw_value, traffic_volume_raw_value, alcohol_impaired_driving_deaths_raw_value) |>
+#   ggpairs()
+```
+
+
+```{r}
+ggplot(renamed_data, aes(x = population, y = long_commute)) +
+  geom_point(color="darkred", size=2, alpha=0.5) +
+  geom_rug(alpha=0.4) +
+  scale_x_log10() + # plots on log scale
+  scale_y_continuous(labels=scales::percent_format()) +
+  labs(title = "Population vs long_commute", x = "population", y = "long_commute") +
+  theme_minimal()
+```
+
+## drug overdose deaths and median_house_income as confounding variable for different races
+
+```{r}
+# name_mapping <- c(
+#   "drug_overdose_deaths_raw_value" = "overdose_deaths",
+#   "median_household_income_raw_value" = "median_income",
+#   "x_asian_raw_value" = "asian_pop",
+#   "x_american_indian_or_alaska_native_raw_value" = "native_pop"
+# )
+# 
+# names(selected_data) <- name_mapping[names(selected_data)]
+
+# short_names <- c(
+#   "overdose_deaths",
+#   "median_income",
+#   "asian_pop",
+#   "native_pop"
+# )
+# 
+# attach(selected_data)
+# pairs(drug_overdose_deaths_raw_value~median_household_income_raw_value+x_asian_raw_value+x_american_indian_or_alaska_native_raw_value, labels=short_names)
+
+
+# children in poverty--percentage of people under age 18 in poverty
+# does not necessarily mean people under 18 are drug overdosing
+# Percentage of adults who are current smokers (age-adjusted).
+
+# variables to not look at
+# excessive drinking is only percentage of adults that report binge or heavy drinking
+
+
+renamed_data2 <- selected_data |>
+  select(
+    median_household_income_raw_value,
+    x_asian_raw_value,
+    x_hispanic_raw_value,
+    drug_overdose_deaths_raw_value
+  )
+
+renamed_data2 |>
+  ggpairs() +
+  scale_x_log10() 
+
+ggplot(selected_data, aes(x = median_household_income_raw_value, y = drug_overdose_deaths_raw_value)) +
+  scale_x_log10() +
+  geom_point(color="darkred", size=2, alpha=0.5) +
+  geom_smooth() +
+  geom_rug(alpha=0.4) +
+  labs(x = "median house income", y = "drug overdose deaths") +
+  theme_minimal()
+
+ggplot(selected_data, aes(x = log(median_household_income_raw_value), y = drug_overdose_deaths_raw_value)) +
+  geom_point(color="darkred", size=2, alpha=0.5) +
+  geom_rug(alpha=0.4) +
+  labs(title = "median_house income", x = "log(median house income)", y = "drug overdose") +
+  theme_minimal()
+
+# to get pairs of all variables we are interested in looking at 
+
+set2<-selected_data |>
+  select(median_household_income_raw_value,
+         excessive_drinking_raw_value, some_college_raw_value,
+         adult_smoking_raw_value, drug_overdose_deaths_raw_value) |>
+  rename(
+    overdose_deaths = drug_overdose_deaths_raw_value,
+    household_income = median_household_income_raw_value,
+    excessive_drinking = excessive_drinking_raw_value,
+    some_college_raw_value = completed_college,
+    adult_smoking = adult_smoking_raw_value
+  )
+
+set2 |>
+  ggpairs() 
+  
+```
 
 ```{r}
 # looking at states only, filter by states 
@@ -106,7 +221,76 @@ ggplot(health_data, aes(x=population_raw_value)) +
   labs(title = "Distribution of % Below 18 Years of Age", x = "% Below 18 Years of Age", y = "Frequency")
 ```
 
-## check if we should include interaction term for age and gender
+## alcohol impaired death--pop over 65, alaskan native, single parent house, % of people that live in census defined rural area
+
+```{r}
+set3<-selected_data |>
+  select(x_65_and_older_raw_value,
+         x_rural_raw_value, x_american_indian_or_alaska_native_raw_value, excessive_drinking_raw_value,
+         alcohol_impaired_driving_deaths_raw_value) |>
+  rename(
+    overdose_deaths = drug_overdose_deaths_raw_value,
+    household_income = median_household_income_raw_value,
+    excessive_drinking = excessive_drinking_raw_value,
+    some_college_raw_value = completed_college,
+    adult_smoking = adult_smoking_raw_value
+  )
+
+set3 |>
+  ggpairs() +
+  scale_x_log10()
+
+ggplot(selected_data, aes(x=log(x_american_indian_or_alaska_native_raw_value), y=alcohol_impaired_driving_deaths_raw_value))  +
+  geom_point(color="darkred", size=2, alpha=0.5) +
+  geom_smooth(method = 'lm', color = 'blue', se = TRUE)
+
+library(car)
+
+x_rural_raw_value <-x_rural_raw_value + 1
+x_american_indian_or_alaska_native_raw_value<-x_american_indian_or_alaska_native_raw_value + 1
+
+# power transform doesn't work unless u have nonzero values
+summary(powerTransform(cbind(x_65_and_older_raw_value,
+         x_rural_raw_value, x_american_indian_or_alaska_native_raw_value)~1))
+```
+
+```{r}
+ggplot(selected_data, aes(x = x_female_raw_value, y = alcohol_impaired_driving_deaths_raw_value)) +
+  geom_point(color="darkred", size=2, alpha=0.5) +
+  geom_smooth(method = 'lm', color = 'blue', se = TRUE) +
+  scale_x_continuous(labels=scales::percent_format()) +
+  labs(title = 'Female Population vs Alcohol-Impaired Driving Deaths', x = 'Female Population', y = 'Alcohol-Impaired Driving Deaths')
+
+lin_model<-lm(alcohol_impaired_driving_deaths_raw_value~x_female_raw_value, data=selected_data)
+
+summary(lin_model)
+
+ggplot(selected_data, aes(x = log(x_american_indian_or_alaska_native_raw_value), y = alcohol_impaired_driving_deaths_raw_value)) +
+  geom_point(color="darkred", size=2, alpha=0.5) +
+  geom_smooth(method = 'lm', color = 'blue', se = TRUE) +
+  scale_y_continuous(labels=scales::percent_format()) +
+  labs(title = 'alaska natives vs Alcohol-Impaired Driving Deaths', x = 'american indian or alaska natives', y = 'Alcohol-Impaired Driving Deaths')
+
+ggplot(selected_data, aes(x = x_american_indian_or_alaska_native_raw_value, y = alcohol_impaired_driving_deaths_raw_value)) +
+  geom_point(color="darkred", size=2, alpha=0.5) +
+  geom_smooth(method = 'lm', color = 'blue', se = TRUE) +
+  scale_x_log10() +
+  scale_y_continuous(labels=scales::percent_format()) +
+  labs(title = 'alaska natives vs Alcohol-Impaired Driving Deaths', x = 'american indian or alaska natives', y = 'Alcohol-Impaired Driving Deaths')
+
+```
+
+## analyzing excessive drinking vs alcohol-impaired driving deaths
+
+```{r}
+ggplot(selected_data, aes(x = excessive_drinking_raw_value, y = alcohol_impaired_driving_deaths_raw_value)) +
+  geom_point(color="darkred", size=2, alpha=0.5) +
+  geom_smooth(method = 'lm', color = 'blue', se = TRUE) +
+  scale_x_log10() +
+  scale_y_continuous(labels=scales::percent_format()) +
+  labs(title = 'alaska natives vs Alcohol-Impaired Driving Deaths', x = 'excessive drinking rate', y = 'Alcohol-Impaired Driving Deaths')
+```
+
 ```{r}
 # below age of 18: raw percentage of people below 18 years old in the state 
 # 65 and older raw value: raw percentage of peple 65 and older
@@ -118,8 +302,6 @@ ggplot(health_data, aes(x=population_raw_value)) +
 ggplot(selected_data, aes(x=state_abbreviation, y=alcohol_impaired_driving_deaths_raw_value)) +
   geom_bar(stat="identity")
 ```
-
-You can also embed plots, for example:
 
 ```{r}
 # issue with git?
@@ -165,4 +347,198 @@ ggplot(df, aes(x = "", y = v053_rawvalue)) +
   geom_boxplot(fill = "green", alpha = 0.7) +
   labs(title = "Box Plot of % 65 and Older", y = "% 65 and Older")
 
+```
+
+## alcohol impaired deaths based on montana state only 
+
+```{r}
+
+states_w_highest_alcohol_death <- selected_data |>
+  filter(state_abbreviation %in% c("MT", "ND", "SD", "CO", "WI"))
+
+states_w_lowest_alcohol_death <- selected_data |>
+  filter(state_abbreviation %in% c("AZ", "KS", "ID", "FL", "GA")) # removed UTAH
+
+
+MT_alcohol_death <- selected_data |>
+  filter(state_abbreviation=="MT")
+
+# color the scatterplot 
+ggplot(states_w_lowest_alcohol_death, aes(x = median_household_income_raw_value, y = excessive_drinking_raw_value)) +
+  geom_point(color="darkorange", size=2, alpha=0.5) +
+  geom_smooth(method = 'lm', color = 'blue', se = TRUE) +
+  #scale_x_log10() +
+  scale_y_continuous(labels=scales::percent_format()) +
+  labs(title = 'excessive_drinking vs Alcohol-Impaired Driving Deaths', x = 'excessive drinking rate', y = 'Alcohol-Impaired Driving Deaths')
+```
+
+## Comparing counties in states with high alcohol death vs with low alcohol death
+
+```{r}
+combined_data <- bind_rows(
+  states_w_highest_alcohol_death %>% mutate(Counties = "in states with High Alcohol Death"),
+  states_w_lowest_alcohol_death %>% mutate(Counties = "in states with Low Alcohol Death")
+)
+
+ggplot(combined_data, aes(x = median_household_income_raw_value, y = excessive_drinking_raw_value, color = Counties)) +
+  geom_point(size = 2, alpha = 0.5) +
+  geom_smooth(method = 'lm', aes(group = Counties), se = TRUE) +
+  scale_y_continuous(labels=scales::percent_format()) +
+  labs(title = 'Median Household Income vs Excessive Drinking',
+       x = 'Median Household Income',
+       y = 'Excessive Drinking Rate') +
+  scale_color_manual(values = c("in states with High Alcohol Death" = "darkred", "in states with Low Alcohol Death" = "darkgreen"))
+
+```
+
+```{r}
+# counties_w_highest_alcohol_death <- selected_data |>
+#   filter(alcohol_impaired_driving_deaths_raw_value)
+# 
+# states_w_lowest_alcohol_death <- selected_data |>
+#   filter(state_abbreviation %in% c("AZ", "KS", "ID", "FL", "GA")) # removed UTAH
+
+#median_value <- median(selected_data$alcohol_impaired_driving_deaths_raw_value, na.rm = TRUE)
+
+# selected_data <- selected_data |>
+#   mutate(Counties = ifelse(alcohol_impaired_driving_deaths_raw_value > median_value, 
+#                                          "High Alcohol Impaired Deaths", 
+#                                          "Low Alcohol Impaired Deaths"))
+
+high_threshold <- 0.3364
+low_threshold <- 0.1818
+
+# Create a new variable based on the thresholds
+selected_data_first_and_third <- selected_data %>%
+  filter(alcohol_impaired_driving_deaths_raw_value > high_threshold | alcohol_impaired_driving_deaths_raw_value < low_threshold) |>
+  mutate(Counties = case_when(
+    alcohol_impaired_driving_deaths_raw_value > high_threshold ~ "High Alcohol Impaired Deaths Rate",
+    alcohol_impaired_driving_deaths_raw_value < low_threshold ~ "Low Alcohol Impaired Deaths Rate",
+    TRUE ~ "Medium Alcohol Impaired Deaths"
+  ))
+
+ggplot(selected_data_first_and_third, aes(x = median_household_income_raw_value, y = excessive_drinking_raw_value, color = Counties)) +
+  geom_point(size = 2, alpha = 0.5) +
+  geom_smooth(method = 'lm', aes(group = Counties), se = TRUE) +
+  scale_y_continuous(labels=scales::percent_format()) +
+  labs(title = 'Median Household Income vs Excessive Drinking',
+       x = 'Median Household Income',
+       y = 'Excessive Drinking Rate') +
+  scale_color_manual(values = c("High Alcohol Impaired Deaths Rate" = "darkred", "Low Alcohol Impaired Deaths Rate" = "darkgreen"))
+
+```
+
+visualizing distribution of alcohol_impaired_deaths
+```{r}
+# Step 1: Create a named vector for the summary statistics
+summary_stats <- c(Min = 0.0000, `1st Qu.` = 0.1818, Median = 0.2647, Mean = 0.2733, `3rd Qu.` = 0.3364, Max = 1.0000)
+
+# Step 2: Create the bar plot
+barplot(summary_stats, 
+        main = "Summary Statistics for Alcohol Impaired Driving Deaths (Raw Value)", 
+        ylab = "Values", 
+        xlab = "Statistics", 
+        col = c("blue", "green", "orange", "red", "purple", "brown"), 
+        ylim = c(0, max(summary_stats) * 1.1), # Adding some space on top for labels
+        las = 2) # Making the x-axis labels perpendicular to the axis
+
+# Step 3: Add text labels on the bars
+text(x = barplot(summary_stats, plot = FALSE), 
+     y = summary_stats, 
+     labels = round(summary_stats, 4), 
+     pos = 3, 
+     cex = 0.8, 
+     col = "black")
+
+```
+
+## visualizing adult smoking rate vs drug overdose deaths
+
+```{r}
+summary(selected_data$drug_overdose_deaths_raw_value)
+
+high_threshold2 <- 35.75
+low_threshold2 <- 17.71
+
+selected_data_first_and_third2 <- selected_data %>%
+  filter(drug_overdose_deaths_raw_value > high_threshold2 | drug_overdose_deaths_raw_value < low_threshold2) |>
+  mutate(Counties = case_when(
+    drug_overdose_deaths_raw_value > high_threshold2 ~ "High Drug Overdose rate",
+    drug_overdose_deaths_raw_value < low_threshold2 ~ "Low Drug Overdose rate",
+    TRUE ~ "Medium Alcohol Impaired Deaths"
+  ))
+
+ggplot(selected_data_first_and_third2, aes(x = children_in_poverty_raw_value, y = adult_smoking_raw_value, color = Counties)) +
+  geom_point(size = 2, alpha = 0.5) +
+  geom_smooth(method = 'lm', aes(group = Counties), se = TRUE) +
+  scale_y_continuous(labels=scales::percent_format()) +
+  scale_x_continuous(labels=scales::percent_format()) +
+  labs(title = "Counties with high overdose rates have high rate of current smokers",
+       x = '% of people under 18 in poverty',
+       y = '% of adult current smokers') +
+  scale_color_manual(values = c("High Drug Overdose rate" = "darkred", "Low Drug Overdose rate" = "darkgreen"))
+
+```
+
+## visualizing excessive drinking vs median household income
+
+```{r}
+# selected_data |>
+#   mutate(income_level = )
+
+# at different states, you have different interpretations of what is considered low income, lower-middle
+selected_data$income_level <- cut(selected_data$median_household_income_raw_value,
+                                  breaks = c(-Inf, 52610, 60986, 70897, Inf),
+                                  labels = c("Low", "Lower-Middle", "Upper-Middle", "High"),
+                                  right = TRUE, na.rm=TRUE)
+
+selected_data <- selected_data %>%
+  drop_na(excessive_drinking_raw_value, alcohol_impaired_driving_deaths_raw_value)
+
+ggplot(selected_data, aes(x = excessive_drinking_raw_value, y = alcohol_impaired_driving_deaths_raw_value)) +
+  geom_point(size = 2, alpha = 0.5, aes(color = income_level)) +
+  geom_smooth(method = 'lm', se = TRUE) +
+  scale_y_continuous(labels=scales::percent_format()) +
+  scale_x_continuous(labels=scales::percent_format()) +
+  labs(title = "Counties with higher median income tend to have higher proportion of adults that excessively drink",
+       x = '% of adults that excessively drink',
+       y = '% of driving deaths with alcohol involvement') +
+  scale_color_manual(values = c("Low" = "yellow", "Lower-Middle" = "lightgreen", "Upper-Middle" = "yellowgreen", "High" = "darkgreen")) 
+
+# counties with higher median income tend to have higher percentage of adults that binge drink leading to higher rate of driving fatalities from alcohol
+
+lm(alcohol_impaired_driving_deaths_raw_value~excessive_drinking_raw_value, data=selected_data)
+
+model <- lm(alcohol_impaired_driving_deaths_raw_value ~ excessive_drinking_raw_value, data = selected_data)
+
+# Extract the coefficients
+coefficients <- coef(model)
+intercept <- coefficients[1]
+slope <- coefficients[2]
+
+```
+
+```{r}
+model <- lm(alcohol_impaired_driving_deaths_raw_value ~ excessive_drinking_raw_value, data = selected_data)
+
+# Extract the coefficients
+coefficients <- coef(model)
+intercept <- coefficients[1]
+slope <- coefficients[2]
+
+# Create the equation label
+eq <- paste0("y = ", round(slope, 2), "x + ", round(intercept, 2))
+
+
+
+ggplot(selected_data, aes(x = excessive_drinking_raw_value, y = alcohol_impaired_driving_deaths_raw_value, color = income_level)) +
+  geom_point(size = 2, alpha = 0.5) +
+  geom_smooth(method = 'lm', se = TRUE) +
+  scale_y_continuous(labels = scales::percent_format()) +
+  scale_x_continuous(labels = scales::percent_format()) +
+  labs(
+       x = '% of adults that excessively drink',
+       y = '% of driving deaths with alcohol involvement') +
+  scale_color_manual(values = c("Low" = "yellow", "Lower-Middle" = "lightgreen", "Upper-Middle" = "yellowgreen", "High" = "darkgreen")) +
+  stat_regline_equation(label.x = 0.1, label.y = 0.9, aes(label = ..eq.label..), size = 5)
 ```
