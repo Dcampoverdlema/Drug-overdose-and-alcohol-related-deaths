@@ -49,13 +49,14 @@ str(imputed_data)
 
 
 ```{r}
-cor_matrix <- cor(imputed_data)
+cor_matrix_d <- cor(imputed_data)
+cor_matrix_a <- cor(imputed_data)
 ```
 
 
 
 ```{r}
-drug_correlations <- cor_matrix["Drug_Overdose_Deaths", ]
+drug_correlations <- cor_matrix_d["Drug_Overdose_Deaths", ]
 
 # Convert to dataframe for ggplot
 drug_cor_df <- data.frame(
@@ -64,10 +65,10 @@ drug_cor_df <- data.frame(
 )
 
 # Plot
-ggplot(alcohol_cor_df, aes(x = reorder(Variable, Correlation), y = Correlation, fill = Correlation > 0)) +
+ggplot(drug_cor_df, aes(x = reorder(Variable, Correlation), y = Correlation, fill = Correlation > 0)) +
   geom_bar(stat = "identity") +
   coord_flip() +  # Flips the axes for better readability
-  labs(title = "Correlation with Alcohol-Impaired Driving Deaths", x = "Variable", y = "Correlation") +
+  labs(title = "Correlation with Drug Overdose Deaths", x = "Variable", y = "Correlation") +
   scale_fill_manual(values = c("red", "blue"), name = "Correlation Type",
                     labels = c("Negative", "Positive")) +
   theme_minimal() +
@@ -83,7 +84,7 @@ ggsave("Correlation_with_Drug_Overdose_Deaths.png")
 
 
 ```{r}
-alcohol_correlations <- cor_matrix["Alcohol_Impaired_Driving_Deaths", ]
+alcohol_correlations <- cor_matrix_a["Alcohol_Impaired_Driving_Deaths", ]
 
 # Convert to dataframe for ggplot
 alcohol_cor_df <- data.frame(
