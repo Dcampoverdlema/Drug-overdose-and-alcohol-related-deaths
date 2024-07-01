@@ -88,34 +88,90 @@ ggplot(data = merged_data, aes(x = long, y = lat, group = group)) +
   geom_polygon(aes(fill = drug_overdose_deaths_raw_value), color = "white") +
   scale_fill_viridis_c(option = "plasma", na.value = "grey50") +
   coord_fixed(1.3)+
-  guides(fill = FALSE)
+ theme(axis.title= element_blank(), 
+       axis.text=element_blank()) +
+  labs(title="Drug Overdose Deaths by State", 
+       fill="Drug Overdose Deaths")
 
 ggplot(data = merged_data, aes(x = long, y = lat, group = group)) +
   geom_polygon(aes(fill = adult_smoking_raw_value), color = "white") +
   scale_fill_viridis_c(option = "plasma", na.value = "grey50") +
   coord_fixed(1.3)+
-  guides(fill = FALSE)
+  theme(axis.title= element_blank(), 
+        axis.text=element_blank()) +
+  labs(title= "Adult Smoking")
 
 # west virginia can be examined more because what in the hell is
 # going on in west virginia ?? 
+
 
 
 # map for alcohol impaired driving deaths-------------------------- 
 
 ggplot(data = merged_data, aes(x = long, y = lat, group = group)) +
   geom_polygon(aes(fill = alcohol_impaired_driving_deaths_raw_value), color = "white") +
-  scale_fill_viridis_c(option = "plasma", na.value = "grey50") +
-  coord_fixed(1.3)+
-  guides(fill = FALSE)
+  scale_fill_viridis_c(option = "plasma", na.value = "grey50", labels = scales::percent_format(scale = 100)) +
+  coord_fixed(1.3) +
+  theme_minimal() +  # Apply the minimal theme
+  theme(
+    axis.title = element_blank(),
+    axis.text = element_blank(),
+    axis.ticks = element_blank(),  # Remove axis ticks
+    text = element_text(family = "serif"),  # Set global text family to serif
+    plot.title = element_text(hjust = 0.5, face = "bold", size = 14),  # Center, bold the title, and increase font size
+    plot.subtitle = element_text(hjust = 0.5, face = "plain", size = 8),  # Center the subtitle, normal weight, and reduce font size
+    plot.caption = element_text(face = "italic", size = 6, hjust = 0)  # Italicize, reduce font size of the caption, and left-align
+  ) +
+  labs(
+    title = "Alcohol Impaired Driving Deaths by State",
+    subtitle = "Data source: County Health Rankings & Roadmaps (https://www.countyhealthrankings.org/)",
+    fill = "*Alcohol Driving Deaths",
+    caption = "*Percentage of motor vehicle crash deaths with alcohol involvement."
+  )
 
 # taking a closer look at montana
 
 ggplot(data = merged_data, aes(x = long, y = lat, group = group)) +
   geom_polygon(aes(fill = x_female_raw_value), color = "white") +
   scale_fill_viridis_c(option = "plasma", na.value = "grey50") +
-  coord_fixed(1.3)+
-  guides(fill = FALSE)
+  coord_fixed(1.3) + 
+  labs(title="Females")
 
-# she got real real high alcohol impaired driving 
+# taking a closer look at west virginia for drug overdose -------------------------------------------
+west_virginia_data <- selected_data |>  
+  filter(state_fips_code==54, name !="West Virginia") 
+
+west_virginia_data$county <- c("barbour","berkeley","boone","braxton","brooke","cabell", "calhoun", "clay",
+                               "doddridge","fayette","gilmer","grant","greenbrier","hampshire","hancock","hardy", 
+                               "harrison","jackson","jefferson","kanawha","lewis","lincoln","logan","mcdowell", 
+                               "marion","marshall","mason","mercer","mineral","mingo","monongalia", "monroe", 
+                               "morgan","nicholas","ohio", "pendleton", "pleasants","pocahontas","preston", 
+                               "putnam","raleigh","randolph","ritchie","roane ","summers","taylor","tucker","tyler",
+                               "upshur", "wayne","webster","wetzel","wirt","wood","wyoming")
+
+# Get map data for counties in West Virginia
+counties_map <- map_data("county")
+west_virginia_counties <- subset(counties_map, region == "west virginia")
+west_virginia_merged <- left_join(west_virginia_counties, west_virginia_data, by = c("subregion" = "county"))
+
+west_virginia_merged <- west_virginia_counties %>%
+  left_join(west_virginia_data, by = c("subregion" = "county"))
+
+ggplot(data = west_virginia_merged, aes(x = long, y = lat, group = group)) +
+  geom_polygon(aes(fill=drug_overdose_deaths_raw_value),color = "white") +
+  scale_fill_viridis_c(option = "plasma", na.value = "black") +
+  coord_fixed(1.3) +
+  theme(axis.title= element_blank(), 
+        axis.text=element_blank()) +
+  labs(title= "Drug Overdose Deaths by County", 
+       fill="Number of Deaths")
+
+
+
+
+
+
+
+
 
 
