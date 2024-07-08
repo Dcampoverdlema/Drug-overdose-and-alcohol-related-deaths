@@ -1,0 +1,82 @@
+---
+title: "pca demo"
+author: "Jodie"
+date: "2024-06-28"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+theme_set(theme_light())
+starbucks <- read_csv(
+  "https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2021/2021-12-21/starbucks.csv"
+) |>
+  # convert columns to numeric that were saved as character
+  mutate(trans_fat_g = as.numeric(trans_fat_g), fiber_g = as.numeric(fiber_g))
+glimpse(starbucks)
+```
+
+## R Markdown
+
+```{r}
+feat <- starbucks |> 
+  select(serv_size_m_l:caffeine_mg)
+starbucks_pca <- prcomp(feat, center = TRUE, scale. = TRUE)
+summary(starbucks_pca)
+
+starbucks_pc_matrix <- starbucks_pca$x
+head(starbucks_pc_matrix)
+```
+
+## visualizing first wo princiapl components
+
+```{r}
+starbucks <- starbucks |> 
+  mutate(pc1 = starbucks_pc_matrix[,1], 
+         pc2 = starbucks_pc_matrix[,2])
+starbucks |> 
+  ggplot(aes(x = pc1, y = pc2)) +
+  geom_point(alpha = 0.5) +
+  labs(x = "PC 1", y = "PC 2")
+```
+
+## make biplot with arrows to show linear relationship between onve variable and other variables
+
+```{r}
+install.packages("factoextra")
+library(factoextra)
+starbucks_pca |>
+  fviz_pca_biplot(label="var",
+                  alpha.ind=0.25,
+                  alpha.var=0.8,
+                  col.var="purple",
+                  repe=TRUE)
+
+# x axis is pc 1, y-axis is pc 2
+# angles indicate 
+```
+
+## how many principal components to use
+
+```{r}
+starbucks_pca |>
+  fviz_eig() +
+  geom_hline(yintercept=100*1/ncol(starbucks_pca$x),
+             linetype="dashed")
+```
+
+## prop of variance 
+```{r}
+library(broom)
+starbucks_pca |>
+  tidy(matrix="eigenvalues") |>
+  ggplot(aes(PC, percent)) +
+  geom_col(fill="skyblue")
+  geom_line() +
+  geom_point() +
+  geom_hline(yintercept=1/ncol(starbucks_pca$x),
+             linetype="dashed")
+  scale_x_continuous(breaks=1:11)
+```
+
+90% of variance explained with 4 variables
