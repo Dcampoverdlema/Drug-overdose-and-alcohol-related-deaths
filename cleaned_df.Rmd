@@ -1,0 +1,114 @@
+---
+title: "cleaned_df"
+author: "Jodie"
+date: "2024-07-08"
+output: html_document
+---
+
+
+```{r}
+colnames(selected_data)
+```
+
+## R Markdown
+
+```{r}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+library(tidyverse)
+library(readxl)
+library(janitor)
+library(knitr)
+library(broom)
+
+
+```
+
+
+```{r}
+health_data <- read.csv("data/analytic_data2024.csv") |> 
+  slice(-1) |>
+  clean_names()
+
+
+selected_data <- health_data |> 
+  select(
+    state_fips_code, county_fips_code, county_clustered_yes_1_no_0, state_abbreviation, name, x5_digit_fips_code,
+    drug_overdose_deaths_raw_value, 
+    drug_overdose_deaths_numerator, 
+    drug_overdose_deaths_denominator,
+    alcohol_impaired_driving_deaths_raw_value, alcohol_impaired_driving_deaths_numerator, alcohol_impaired_driving_deaths_denominator,
+    unemployment_raw_value, income_inequality_raw_value, high_school_completion_raw_value, 
+    adult_smoking_raw_value, excessive_drinking_raw_value, median_household_income_raw_value,
+    some_college_raw_value, children_in_poverty_raw_value, children_in_single_parent_households_raw_value,
+    social_associations_raw_value, x_below_18_years_of_age_raw_value, 
+    x_65_and_older_raw_value, x_non_hispanic_black_raw_value, 
+    x_american_indian_or_alaska_native_raw_value, x_asian_raw_value, 
+    x_native_hawaiian_or_other_pacific_islander_raw_value, x_hispanic_raw_value, 
+    x_non_hispanic_white_raw_value, x_not_proficient_in_english_raw_value,
+    x_female_raw_value, x_rural_raw_value, long_commute_driving_alone_raw_value, population_raw_value, traffic_volume_raw_value
+  )
+
+# Convert relevant columns to numeric
+selected_data <- selected_data |> 
+  mutate(across(
+    starts_with("drug_overdose_deaths") | starts_with("alcohol_impaired_driving_deaths") |
+    starts_with("unemployment_raw_value") | starts_with("income_inequality_raw_value") | 
+    starts_with("high_school_completion_raw_value") | starts_with("adult_smoking_raw_value") |
+    starts_with("excessive_drinking_raw_value") | starts_with("median_household_income_raw_value") |
+    starts_with("some_college_raw_value") | starts_with("children_in_poverty_raw_value") | 
+    starts_with("children_in_single_parent_households_raw_value") | 
+    starts_with("social_associations_raw_value") | starts_with("x_below_18_years_of_age_raw_value") | 
+    starts_with("x_65_and_older_raw_value") | starts_with("x_non_hispanic_black_raw_value") | 
+    starts_with("x_american_indian_or_alaska_native_raw_value") | starts_with("x_asian_raw_value") | 
+    starts_with("x_native_hawaiian_or_other_pacific_islander_raw_value") | starts_with("x_hispanic_raw_value") | 
+    starts_with("x_non_hispanic_white_raw_value") | starts_with("x_not_proficient_in_english_raw_value") | 
+    starts_with("x_female_raw_value") | starts_with("x_rural_raw_value") | starts_with("population_raw_value") | starts_with("long_commute_driving_alone_raw_value") | starts_with("traffic_volume_raw_value"), 
+    as.numeric
+  )) 
+#glimpse(health_data)
+
+# add population density column
+# GEOID is a unique county and corresponds to x5_digit_fips_code in health_data
+library(tigris)
+us_counties <- counties(cb = TRUE)
+census_df <- us_counties |>
+  select(x5_digit_fips_code=GEOID, land_area=ALAND)
+
+# Inner join: only rows with matching x5_digit_fips_code will be included
+new_sel <- merge(selected_data, census_df, by = "x5_digit_fips_code")
+
+new_df <- new_sel |>
+  mutate(land_area_km = land_area / 1000000) |>
+  mutate(pop_den = population_raw_value / land_area_km)
+
+glimpse(new_df) # has population density and land area_km
+```
+
+
+```{r}
+new_df$`Income level` <- cut(new_df$median_household_income_raw_value,
+                                  breaks = c(-Inf, 52610, 60986, 70897, Inf),
+                                  labels = c("Low", "Lower-Middle", "Upper-Middle", "High"),
+                                  right = TRUE, na.rm=TRUE)
+
+new_df <- new_df %>%
+  drop_na(excessive_drinking_raw_value, alcohol_impaired_driving_deaths_raw_value)
+```
+
+# only for alcohol_impaired_rates
+```{r}
+# go back on this....based on akshay's comments 
+# include entries with at least 3000
+fifth_percentile <- quantile(new_df$population_raw_value, probs = 0.05)
+print(fifth_percentile) # 2672
+
+new_data <-new_df |>
+  filter(population_raw_value > 3000)
+
+# use new_data for alcohol_impaired death rates
+# use new_df for drug overdose 
+```
