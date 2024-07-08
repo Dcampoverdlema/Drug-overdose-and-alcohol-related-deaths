@@ -40,8 +40,40 @@ selected_data <- selected_data |>
     as.numeric
   ))
 
-selected_data %>% 
-  mutate(across(everything(), ~ifelse(is.na(.) | . == 0, mean(., na.rm = TRUE), .))) 
+
+imputed_data <- read_csv("imputed_data.csv") |> 
+  mutate(across(everything(), ~ifelse(is.na(.) | . == 0, mean(., na.rm = TRUE), .))) |> 
+  rename(
+    ID = ...1,
+    Drug_Overdose_Deaths = drug_overdose_deaths_raw_value,
+    Alcohol_Impaired_Driving_Deaths = alcohol_impaired_driving_deaths_raw_value,
+    Unemployment_Rate = unemployment_raw_value,
+    Income_Inequality = income_inequality_raw_value,
+    Highschool_Comp_Rate = high_school_completion_raw_value,
+    Adult_Smoking_Rate = adult_smoking_raw_value,
+    Excessive_Drinking_Rate = excessive_drinking_raw_value,
+    Median_House_Income = median_household_income_raw_value,
+    College_Education_Rate = some_college_raw_value,
+    Children_In_Poverty = children_in_poverty_raw_value,
+    Single_Parent_House = children_in_single_parent_households_raw_value,
+    Social_Associations = social_associations_raw_value,
+    Pop_Under_18 = x_below_18_years_of_age_raw_value,
+    Pop_Over_65 = x_65_and_older_raw_value,
+    NH_Black = x_non_hispanic_black_raw_value,
+    American_Or_Alaska_Native = x_american_indian_or_alaska_native_raw_value,
+    Asian_Pop = x_asian_raw_value,
+    Pacific_Islander = x_native_hawaiian_or_other_pacific_islander_raw_value,
+    Hispanic_Pop = x_hispanic_raw_value,
+    NH_White = x_non_hispanic_white_raw_value,
+    English_Profic = x_not_proficient_in_english_raw_value,
+    Female_Pop = x_female_raw_value,
+    Rural_Pop = x_rural_raw_value
+  )
+
+
+# use new_data for alcohol_impaired death rates
+# use new_df for drug overdose 
+
 
 # summary of variables for drug overdose ---------------------------------------------------------
 model_drug <- lm(drug_overdose_deaths_raw_value ~ unemployment_raw_value + income_inequality_raw_value + 
@@ -167,10 +199,58 @@ ggplot(data = west_virginia_merged, aes(x = long, y = lat, group = group)) +
        fill="Number of Deaths")
 
 
+# correlation  -----------------------------------------------------------------
+
+cor_matrix_drug <- cor(imputed_data)
+cor_matrix_alc <- cor(imputed_data)
 
 
+# DRUG
+drug_correlations <- cor_matrix_d["Drug_Overdose_Deaths", ]
+
+# Convert to dataframe for ggplot
+drug_cor_df <- data.frame(
+  Variable = names(drug_correlations),
+  Correlation = as.numeric(drug_correlations)
+)
+
+# Plot
+ggplot(drug_cor_df, aes(x = reorder(Variable, Correlation), y = Correlation, fill = Correlation > 0)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +  # Flips the axes for better readability
+  labs(title = "Correlation with Drug Overdose Deaths", x = "Variable", y = "Correlation") +
+  scale_fill_manual(values = c("red", "blue"), name = "Correlation Type",
+                    labels = c("Negative", "Positive")) +
+  theme_minimal() +
+  theme(
+    text = element_text(family = "serif", size = 12),
+    plot.background = element_rect(fill = "white", colour = "white"),
+    panel.background = element_rect(fill = "white", colour = "white")
+  )
 
 
+# ALC !!
+alcohol_correlations <- cor_matrix_a["Alcohol_Impaired_Driving_Deaths", ]
+
+# Convert to dataframe for ggplot
+alcohol_cor_df <- data.frame(
+  Variable = names(alcohol_correlations),
+  Correlation = as.numeric(alcohol_correlations)
+)
+
+# Plot
+ggplot(alcohol_cor_df, aes(x = reorder(Variable, Correlation), y = Correlation, fill = Correlation > 0)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +  # Flips the axes for better readability
+  labs(title = "Correlation with Alcohol-Impaired Driving Deaths", x = "Variable", y = "Correlation") +
+  scale_fill_manual(values = c("red", "blue"), name = "Correlation Type",
+                    labels = c("Negative", "Positive")) +
+  theme_minimal() +
+  theme(
+    text = element_text(family = "serif", size = 12),
+    plot.background = element_rect(fill = "white", colour = "white"),
+    panel.background = element_rect(fill = "white", colour = "white")
+  )
 
 
 
