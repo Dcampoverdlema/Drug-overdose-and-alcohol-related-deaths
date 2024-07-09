@@ -1,0 +1,63 @@
+```{r}
+library(tidyverse)
+library(glmnet)
+library(corrplot)
+library(vip)
+library(forcats)
+
+```
+
+
+```{r}
+health <- read_csv("../data/health_data_selected.csv")
+
+str(health)
+```
+
+
+```{r}
+health <- health |> 
+  select(-living_wage) |>
+  mutate(across(everything(), ~ifelse(is.na(.), mean(., na.rm = TRUE), .)))
+head(health)
+
+
+# Prepare the predictors and response
+x <- as.matrix(health |>  select(-drug_overdose_deaths))
+y <- health$drug_overdose_deaths
+
+```
+
+
+```{r}
+# Perform cross-validation to find the optimal lambda for Lasso
+lasso_cv <- cv.glmnet(x, y, alpha = 1)
+
+# Fit the final Lasso regression model using the optimal lambda
+lasso_final <- glmnet(x, y, alpha = 1, lambda = lasso_cv$lambda.1se)
+
+
+```
+
+
+```{r}
+# Extract the coefficients at the optimal lambda
+lasso_coef <- coef(lasso_final)
+
+lasso_coef
+# Convert the coefficients matrix to a tibble and filter out zero coefficients
+tidy_lasso_coef <- as_tibble(as.matrix(lasso_coef), rownames = "term") %>%
+  filter(term != "(Intercept)" & s0 != 0)
+
+# Visualize the coefficients
+tidy_lasso_coef %>%
+  mutate(term = fct_reorder(term, s0)) %>%
+  ggplot(aes(x = s0, y = term, fill = s0 > 0)) +
+  geom_col(color = "white", show.legend = FALSE) +
+  scale_fill_manual(values = c("darkred", "darkblue")) +
+  labs(title = "Lasso Regression Coefficients",
+       x = "Coefficient Estimate",
+       y = "Predictor")
+
+```
+
