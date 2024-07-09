@@ -1,0 +1,60 @@
+```{r}
+library(tidyverse)
+library(glmnet)
+library(corrplot)
+library(vip)
+library(forcats)
+
+```
+
+
+```{r}
+health <- read_csv("../data/health_data_selected.csv")
+
+str(health)
+```
+
+
+```{r}
+health <- health |> 
+  select(-living_wage) |>
+  mutate(across(everything(), ~ifelse(is.na(.), mean(., na.rm = TRUE), .)))
+head(health)
+
+
+# Prepare the predictors and response
+x <- as.matrix(health |>  select(-drug_overdose_deaths))
+y <- health$drug_overdose_deaths
+
+```
+
+
+```{r}
+# Ridge regression
+ridge_model <- cv.glmnet(x, y, alpha = 0)
+ridge_final <- glmnet(x, y, alpha = 0, lambda = ridge_model$lambda.1se)
+ridge_coef <- as.matrix(coef(ridge_final))
+
+
+plot(ridge_model, xvar = "lambda", label = TRUE) |> 
+title("Ridge Regression Coefficients")
+
+```
+
+
+```{r}
+tidy_ridge_coef <- as_tibble(as.matrix(ridge_coef), rownames = "term") %>%
+  filter(term != "(Intercept)" & s0 != 0)
+
+# Visualize the coefficients
+tidy_ridge_coef %>%
+  mutate(term = fct_reorder(term, s0)) %>%
+  ggplot(aes(x = s0, y = term, fill = s0 > 0)) +
+  geom_col(color = "white", show.legend = FALSE) +
+  scale_fill_manual(values = c("darkred", "darkblue")) +
+  labs(title = "Ridge Regression Coefficients",
+       x = "Coefficient Estimate",
+       y = "Predictor")
+
+```
+

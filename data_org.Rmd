@@ -22,6 +22,9 @@ library(ggcorrplot)
 library(corrplot)
 library(ggdendro)
 
+health_data <- read.csv("data/analytic_data2024.csv")
+
+str(health_data)
 
 ```
 

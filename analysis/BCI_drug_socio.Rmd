@@ -1,0 +1,71 @@
+# Load necessary libraries
+```{r}
+library(tidyverse)
+library(readr)
+```
+
+# Load the data using readr
+```{r}
+spc_tbl_s <- read_csv("../data/drugs_df.csv")
+
+# Convert necessary columns to numeric, handling NA values appropriately
+convert_numeric <- function(df, column_name) {
+  df <- df %>%
+    mutate("{column_name}" := as.numeric(as.character(.data[[column_name]])))
+  return(df)
+}
+```
+
+# Function to dynamically convert columns within a mutate call
+```{r}
+convert_columns <- function(df, cols) {
+  df <- df %>%
+    mutate(across(all_of(cols), ~as.numeric(as.character(.))))
+  return(df)
+}
+```
+
+# List of socio-economic variables to analyze
+```{r}
+socio_econ_vars <- c("Median_HH_Income", "Income_Inequality", "HS_Completion_Rate", 
+                     "Adult_Smoking_Rate", "Excessive_Drinking_Rate", "Unemployment_Rate", 
+                     "Some_College_Rate", "Child_Poverty_Rate", "Single_Parent_Rate", 
+                     "Social_Assoc_Rate", "Female_Rate", "Rural_Rate", "Long_Commute_Rate")
+
+# Convert OD death data to numeric and handle NA
+spc_tbl_s <- convert_columns(spc_tbl_s, c("OD_Deaths_Raw", socio_econ_vars))
+
+# Iterate over each socio-economic variable to calculate BCI and ACI
+results <- list()
+for (var in socio_econ_vars) {
+  spc_tbl_s <- spc_tbl_s %>%
+    arrange(!!sym(var)) %>%
+    mutate(Rank = row_number(), 
+           N_Rank = Rank / n(),
+           Mean_Health = mean(OD_Deaths_Raw, na.rm = TRUE),
+           Cov_Value = cov(N_Rank, OD_Deaths_Raw, use = "complete.obs"),
+           BCI = Cov_Value / Mean_Health,
+           Top_Bottom_Diff = mean(head(OD_Deaths_Raw, ceiling(n()/10)), na.rm = TRUE) - 
+                             mean(tail(OD_Deaths_Raw, ceiling(n()/10)), na.rm = TRUE),
+           ACI = Top_Bottom_Diff / Mean_Health)
+  
+  # Extract summary for the current variable
+  current_results <- spc_tbl_s %>%
+    summarise(BCI = first(BCI), ACI = first(ACI)) %>%
+    as.list()
+  results[[var]] <- current_results
+  
+  # Plotting
+  p <- ggplot(spc_tbl_s, aes(x = N_Rank, y = OD_Deaths_Raw)) +
+    geom_point() +
+    geom_smooth(method = lm, col = "blue") +
+    labs(title = paste("BCI and ACI for", var), x = "Normalized Rank", y = "Overdose Deaths Raw")
+  
+  print(p) # Print plot to RStudio Viewer or to an external window
+}
+```
+
+# Output results to console
+```{r}
+print(results)
+```
