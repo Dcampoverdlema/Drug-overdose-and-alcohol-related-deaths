@@ -49,7 +49,11 @@ selected_data <- health_data |>
     x_american_indian_or_alaska_native_raw_value, x_asian_raw_value, 
     x_native_hawaiian_or_other_pacific_islander_raw_value, x_hispanic_raw_value, 
     x_non_hispanic_white_raw_value, x_not_proficient_in_english_raw_value,
-    x_female_raw_value, x_rural_raw_value, long_commute_driving_alone_raw_value, population_raw_value, traffic_volume_raw_value
+    x_female_raw_value, x_rural_raw_value, long_commute_driving_alone_raw_value, population_raw_value, traffic_volume_raw_value, 
+    homicides_raw_value, homicides_numerator, homicides_denominator,
+    suicides_raw_value, suicides_numerator, suicides_denominator,
+    disconnected_youth_raw_value, disconnected_youth_numerator, 
+    disconnected_youth_denominator
   )
 
 # Convert relevant columns to numeric
@@ -66,7 +70,9 @@ selected_data <- selected_data |>
     starts_with("x_american_indian_or_alaska_native_raw_value") | starts_with("x_asian_raw_value") | 
     starts_with("x_native_hawaiian_or_other_pacific_islander_raw_value") | starts_with("x_hispanic_raw_value") | 
     starts_with("x_non_hispanic_white_raw_value") | starts_with("x_not_proficient_in_english_raw_value") | 
-    starts_with("x_female_raw_value") | starts_with("x_rural_raw_value") | starts_with("population_raw_value") | starts_with("long_commute_driving_alone_raw_value") | starts_with("traffic_volume_raw_value"), 
+    starts_with("x_female_raw_value") | starts_with("x_rural_raw_value") | starts_with("population_raw_value") | starts_with("long_commute_driving_alone_raw_value") | starts_with("traffic_volume_raw_value") |
+starts_with("homicides") | starts_with("suicides") |
+  starts_with("disconnected"),
     as.numeric
   )) 
 #glimpse(health_data)
@@ -111,4 +117,8 @@ new_data <-new_df |>
 
 # use new_data for alcohol_impaired death rates
 # use new_df for drug overdose 
+```
+
+# add homicide (social--community safety), suicide (social--community safety), disconnected youths (social-education)
+```{r}
 ```

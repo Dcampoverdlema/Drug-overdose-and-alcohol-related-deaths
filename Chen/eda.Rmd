@@ -48,7 +48,11 @@ selected_data <- health_data |>
     x_american_indian_or_alaska_native_raw_value, x_asian_raw_value, 
     x_native_hawaiian_or_other_pacific_islander_raw_value, x_hispanic_raw_value, 
     x_non_hispanic_white_raw_value, x_not_proficient_in_english_raw_value,
-    x_female_raw_value, x_rural_raw_value, long_commute_driving_alone_raw_value, population_raw_value, traffic_volume_raw_value
+    x_female_raw_value, x_rural_raw_value, long_commute_driving_alone_raw_value, population_raw_value, traffic_volume_raw_value, 
+    homicides_raw_value, homicides_numerator, homicides_denominator,
+    suicides_raw_value, suicides_numerator, suicides_denominator,
+    disconnected_youth_raw_value, disconnected_youth_numerator, 
+    disconnected_youth_denominator
   )
 
 # Convert relevant columns to numeric
@@ -65,7 +69,9 @@ selected_data <- selected_data |>
     starts_with("x_american_indian_or_alaska_native_raw_value") | starts_with("x_asian_raw_value") | 
     starts_with("x_native_hawaiian_or_other_pacific_islander_raw_value") | starts_with("x_hispanic_raw_value") | 
     starts_with("x_non_hispanic_white_raw_value") | starts_with("x_not_proficient_in_english_raw_value") | 
-    starts_with("x_female_raw_value") | starts_with("x_rural_raw_value") | starts_with("population_raw_value") | starts_with("long_commute_driving_alone_raw_value") | starts_with("traffic_volume_raw_value"), 
+    starts_with("x_female_raw_value") | starts_with("x_rural_raw_value") | starts_with("population_raw_value") | starts_with("long_commute_driving_alone_raw_value") | starts_with("traffic_volume_raw_value") |
+starts_with("homicides") | starts_with("suicides") |
+  starts_with("disconnected"),
     as.numeric
   )) 
 #glimpse(health_data)
@@ -576,9 +582,11 @@ ggplot(new_data, aes(x = pop_den, y = alcohol_impaired_driving_deaths_raw_value)
   geom_smooth(method = 'lm', se = TRUE) +
   labs(x = 'Population density (log scale)', y = 'alcohol impaired death rate')
 
-new_data |> filter(pop_den > 18) |> select( alcohol_impaired_driving_deaths_numerator, alcohol_impaired_driving_deaths_denominator, pop_den)
+new_data |> filter(pop_den > 18, alcohol_impaired_driving_deaths_raw_value == 0 | alcohol_impaired_driving_deaths_raw_value ==1) |> select( alcohol_impaired_driving_deaths_numerator, alcohol_impaired_driving_deaths_denominator, pop_den)
 
 new_data |> filter(pop_den < 18) |> select( alcohol_impaired_driving_deaths_numerator, alcohol_impaired_driving_deaths_denominator, pop_den)
+# histogram facet by 0% and 100%
+# car crash deaths is between 0 and 20, and for everything else--0 and 100,000
 ```
 
 ## faceting excessive drinking vs % driving deaths with alcohol invovlement-- graph above by `Population Density`
@@ -614,7 +622,7 @@ p <- ggplot(new_data, aes(x = excessive_drinking_raw_value, y = alcohol_impaired
   labs(title = "*Counties with higher median income have higher proportion of adults that excessively drink",
        x = '% of adults that excessively drink',
        y = '% of driving deaths with alcohol involvement') +
-  scale_color_manual(values = c("Low" = "lightcyan1", "Lower-Middle" = "lightskyblue2", "Upper-Middle"= "cadetblue", "High" = "darkblue")) 
+  scale_color_manual(values = c("Low" = "yellow", "Lower-Middle" = "lightskyblue2", "Upper-Middle"= "orange", "High" = "darkblue")) 
 
 #"Upper-Middle" = "cadetblue", "lightskyblue2"
 
@@ -698,10 +706,42 @@ examine_zero_alcohol_imp <- selected_data |>
 
 So I see there is no NA for numerator or denominator of alcohol_impaired. The numerator represents total number of alcohol-impaired motor vehicle crash deaths in the 5-year period. The denominator is total number of motor vehicle crash deaths in the 5-year period The numerator is all 0's and denominators are all very small (<20). I thought a very small population could explain the small number of motor vehicle crash deaths but the population are all decently sized I think (50% are < 7000)? There are several that are from the least populated counties in the state. But I find it hard to believe that there are < 20 crash deaths in the span of 5 years even for these counties. What do you think?
 
-## Modeling
+## Feature selection using lasso
 
 ```{r}
-gam_mod<-gam(drug_overdose_deaths_raw_value~s(median_household_income_raw_value) + excessive_drinking_raw_value, data=selected_data)
+# gam_mod<-gam(drug_overdose_deaths_raw_value~s(median_household_income_raw_value) + excessive_drinking_raw_value, data=selected_data)
+# 
+# summary(gam_mod)
 
-summary(gam_mod)
+library(dplyr)
+library(glmnet)
+
+drug_x <- new_df |> 
+  select(
+    pop_den, ends_with("raw_value"),
+    -drug_overdose_deaths_raw_value, 
+    -alcohol_impaired_driving_deaths_raw_value,
+    -population_raw_value
+  ) |>
+  as.matrix()
+
+drug_y <- new_df$drug_overdose_deaths_raw_value
+
+
+# this will only print out non-zero coefficient estimates
+# tidy_lasso_coef |>
+#   filter(lambda == prostate_lasso_cv$lambda.1se)
+
+# glmnet automaticaly standardize variables
+drug_lasso_cv <- cv.glmnet(drug_x, drug_y, 
+                               alpha = 1)
+
+tidy_lasso_coef <- tidy(drug_lasso_cv$glmnet.fit)
+tidy_lasso_coef |> 
+  ggplot(aes(x = lambda, y = estimate, group = term)) +
+  scale_x_log10() +
+  geom_line(alpha = 0.75) +
+  geom_vline(xintercept = drug_lasso_cv$lambda.min) +
+  geom_vline(xintercept = drug_lasso_cv$lambda.1se, 
+             linetype = "dashed", color = "red")
 ```
