@@ -1,0 +1,60 @@
+# Load necessary libraries
+```{r}
+library(tidyverse)
+library(readr)
+```
+
+# Load the data using readr
+```{r}
+spc_tbl_ <- read_csv("../data/drugs_df.csv")
+
+# Convert necessary columns to numeric, handling NA values appropriately
+convert_columns <- function(df, cols) {
+  df <- df %>%
+    mutate(across(all_of(cols), ~as.numeric(as.character(.))))
+  return(df)
+}
+```
+
+# List of demographic variables to analyze (adjust this list based on your actual data)
+```{r}
+demographic_vars <- c("Age_Under_18", "Age_65_Plus", "NH_Black_Rate", "AI_AN_Rate", "Asian_Rate", 
+                      "Hispanic_Rate", "NH_White_Rate", "Female_Rate")
+
+# Convert OD death data to numeric and handle NA
+spc_tbl_ <- convert_columns(spc_tbl_, c("OD_Deaths_Raw", demographic_vars))
+
+# Iterate over each demographic variable to calculate BCI and ACI
+results <- list()
+for (var in demographic_vars) {
+  spc_tbl_ <- spc_tbl_ %>%
+    arrange(!!sym(var)) %>%
+    mutate(Rank = row_number(), 
+           N_Rank = Rank / n(),
+           Mean_Health = mean(OD_Deaths_Raw, na.rm = TRUE),
+           Cov_Value = cov(N_Rank, OD_Deaths_Raw, use = "complete.obs"),
+           BCI = Cov_Value / Mean_Health,
+           Top_Bottom_Diff = mean(head(OD_Deaths_Raw, ceiling(n()/10)), na.rm = TRUE) - 
+                             mean(tail(OD_Deaths_Raw, ceiling(n()/10)), na.rm = TRUE),
+           ACI = Top_Bottom_Diff / Mean_Health)
+  
+  # Extract summary for the current variable
+  current_results <- spc_tbl_ %>%
+    summarise(BCI = first(BCI), ACI = first(ACI)) %>%
+    as.list()
+  results[[var]] <- current_results
+  
+  # Plotting
+  p <- ggplot(spc_tbl_, aes(x = N_Rank, y = OD_Deaths_Raw)) +
+    geom_point() +
+    geom_smooth(method = lm, col = "blue") +
+    labs(title = paste("BCI and ACI for", var), x = "Normalized Rank", y = "Overdose Deaths Raw")
+  
+  print(p) # Print plot to RStudio Viewer or to an external window
+}
+```
+
+# Output results to console
+```{r}
+print(results)
+```

@@ -7,7 +7,7 @@ output: html_document
 
 
 ```{r}
-colnames(selected_data)
+#colnames(selected_data)
 ```
 
 ## R Markdown
@@ -102,7 +102,52 @@ new_df$`Income level` <- cut(new_df$median_household_income_raw_value,
                                   right = TRUE, na.rm=TRUE)
 
 new_df <- new_df %>%
-  drop_na(excessive_drinking_raw_value, alcohol_impaired_driving_deaths_raw_value)
+  rename(
+    FIPS_5 = x5_digit_fips_code,
+    State_FIPS = state_fips_code,
+    County_FIPS = county_fips_code,
+    Clustered = county_clustered_yes_1_no_0,
+    State_Abbrev = state_abbreviation,
+    County_Name = name,
+    OD_Deaths_Raw = drug_overdose_deaths_raw_value,
+    OD_Deaths_Num = drug_overdose_deaths_numerator,
+    OD_Deaths_Denom = drug_overdose_deaths_denominator,
+    Alcohol_Deaths_Raw = alcohol_impaired_driving_deaths_raw_value,
+    Alcohol_Deaths_Num = alcohol_impaired_driving_deaths_numerator,
+    Alcohol_Deaths_Denom = alcohol_impaired_driving_deaths_denominator,
+    Unemployment_Rate = unemployment_raw_value,
+    Income_Inequality = income_inequality_raw_value,
+    HS_Completion_Rate = high_school_completion_raw_value,
+    Adult_Smoking_Rate = adult_smoking_raw_value,
+    Excessive_Drinking_Rate = excessive_drinking_raw_value,
+    Median_HH_Income = median_household_income_raw_value,
+    Some_College_Rate = some_college_raw_value,
+    Child_Poverty_Rate = children_in_poverty_raw_value,
+    Single_Parent_Rate = children_in_single_parent_households_raw_value,
+    Social_Assoc_Rate = social_associations_raw_value,
+    Age_Under_18 = x_below_18_years_of_age_raw_value,
+    Age_65_Plus = x_65_and_older_raw_value,
+    NH_Black_Rate = x_non_hispanic_black_raw_value,
+    AI_AN_Rate = x_american_indian_or_alaska_native_raw_value,
+    Asian_Rate = x_asian_raw_value,
+    NHPI_Rate = x_native_hawaiian_or_other_pacific_islander_raw_value,
+    Hispanic_Rate = x_hispanic_raw_value,
+    NH_White_Rate = x_non_hispanic_white_raw_value,
+    English_Proficiency = x_not_proficient_in_english_raw_value,
+    Female_Rate = x_female_raw_value,
+    Rural_Rate = x_rural_raw_value,
+    Long_Commute_Rate = long_commute_driving_alone_raw_value,
+    Population = population_raw_value,
+    Traffic_Volume = traffic_volume_raw_value,
+    Land_Area_sqm = land_area,
+    Geometry = geometry,
+    Land_Area_km = land_area_km,
+    Pop_Density = pop_den
+  ) |> 
+    drop_na(Excessive_Drinking_Rate, Alcohol_Deaths_Raw)
+
+
+str(new_df)
 ```
 
 # only for alcohol_impaired_rates
@@ -112,13 +157,25 @@ new_df <- new_df %>%
 fifth_percentile <- quantile(new_df$population_raw_value, probs = 0.05)
 print(fifth_percentile) # 2672
 
-new_data <-new_df |>
-  filter(population_raw_value > 3000)
+new_data <- new_df %>%
+  filter(Population > 3000)
+
+
+names(new_data)
+
 
 # use new_data for alcohol_impaired death rates
 # use new_df for drug overdose 
 ```
 
+<<<<<<< HEAD
 # add homicide (social--community safety), suicide (social--community safety), disconnected youths (social-education)
 ```{r}
 ```
+=======
+```{r}
+write.csv(new_data, "alcohol_df.csv")
+write.csv(new_df, "drugs_df.csv")
+```
+
+>>>>>>> 9f5df130596e62a7852c6a4915d0664f1a083b3f
