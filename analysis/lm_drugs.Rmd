@@ -2,10 +2,7 @@
 # Load necessary libraries
 library(tidyverse)
 library(glmnet)
-library(broom)
-```
 
-```{r}
 health <- read_csv("../data/final_data.csv")
 
 health <- health |> 
@@ -13,14 +10,11 @@ health <- health |>
   mutate(across(everything(), ~ifelse(is.na(.), mean(., na.rm = TRUE), .)))
 
 head(health)
-```
 
+response <- health$drug_overdose_deaths
+predictors <- as.matrix(health |>  select(-drug_overdose_deaths))
 
-```{r}
-response <- health$alcohol_impaired_driving_deaths
-predictors <- as.matrix(health |>  select(-alcohol_impaired_driving_deaths))
-
-set.seed(123)  
+set.seed(123)  # For reproducibility
 cv_fit <- cv.glmnet(predictors, response, alpha = 1, nfolds = 10)
 
 print(cv_fit)
@@ -36,11 +30,11 @@ print(coef(final_model))
 
 
 ```
-qqplot model diagnostic 
+
 
 ```{r}
-health_lm <- lm(alcohol_impaired_driving_deaths ~ ., data = health)
-
+health_lm <- lm(drug_overdose_deaths ~ ., data = health)
+library(broom)
 health_lm |> 
   tidy() |> 
   mutate(term = fct_reorder(term, estimate)) |> 
