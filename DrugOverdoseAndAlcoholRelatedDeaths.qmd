@@ -50,7 +50,7 @@ library(sf)
 health_data_new <- read.csv("data/health_data_selected.csv") |>  
   slice(-1) |> 
   mutate(across(everything(), ~ifelse(is.na(.) | . == 0, mean(., na.rm = TRUE), .))) |>  
-  subset(select=-living_wage)
+  select(alcohol_impaired_driving_deaths, unemployment, median_household_income, children_in_single_parent_households,social_associations, drug_overdose_deaths, disconnected_youth, homicides, suicides,percent_below_18_years_of_age, percent_65_and_older, percent_native_hawaiian_or_other_pacific_islander, percent_non_hispanic_black, percent_hispanic, percent_female, -living_wage, population)
 
 ```
  
@@ -197,16 +197,14 @@ ggplot(drug_cor_df, aes(x = reorder(Variable, Correlation), y = Correlation, fil
   )
 ```
 
-**Upon inspection, injury deaths, children in poverty, food insecurity, firearm fatalities, and income inequality are some of the variables with positive correlations with drug overdose deaths.** 
 
-**Variables with negative correlation are median household income, some college, voter turnout, and census population** 
 
 
 ```{r}
 # ALC !!
 alcohol_correlations <- cor_matrix_a["alcohol_impaired_driving_deaths", ]
 
-# Convert to dataframe for ggplot
+# Convert to data frame for ggplot
 alcohol_cor_df <- data.frame(
   Variable = names(alcohol_correlations),
   Correlation = as.numeric(alcohol_correlations)
@@ -227,9 +225,7 @@ ggplot(alcohol_cor_df, aes(x = reorder(Variable, Correlation), y = Correlation, 
   )
 ```
 
-**Variables with positive correlation with alcohol impaired driving deaths are american indian or alaska native, percent 65 or older, and highschool completion.** 
 
-**Variables with negative correlation are food insecurity, uninsured, and children eligible for free or reduced lunch** 
 
 ```{r}
 
@@ -244,17 +240,82 @@ ggplot(alcohol_cor_df, aes(x = reorder(Variable, Correlation), y = Correlation, 
 **Lasso Regression** 
 
 ```{r}
-health_data_new <- health_data_new |> 
+
+library(tidyverse)
+library(glmnet)
+library(corrplot)
+library(vip)
+library(forcats)
+
+
+health_data_alc <- health_data_new |> 
   filter(population > 3000) |> 
   mutate(across(everything(), ~ifelse(is.na(.), mean(., na.rm = TRUE), .)))
 
-
-x <- as.matrix(health_data_new |>  select(-alcohol_impaired_driving_deaths))
-y <- health_data_new$alcohol_impaired_driving_deaths
-
+x <- as.matrix(health_data_alc |>  select(-alcohol_impaired_driving_deaths))
+y <- health_data_alc$alcohol_impaired_driving_deaths
 
 
+# Perform cross-validation to find the optimal lambda for Lasso
+lasso_cv <- cv.glmnet(x, y, alpha = 1)
 
+# Fit the final Lasso regression model using the optimal lambda
+lasso_final <- glmnet(x, y, alpha = 1, lambda = lasso_cv$lambda.1se)
+
+
+# Extract the coefficients at the optimal lambda
+lasso_coef <- coef(lasso_final)
+
+lasso_coef
+# Convert the coefficients matrix to a tibble and filter out zero coefficients
+tidy_lasso_coef <- as_tibble(as.matrix(lasso_coef), rownames = "term") %>%
+  filter(term != "(Intercept)" & s0 != 0)
+
+# Visualize the coefficients
+tidy_lasso_coef %>%
+  mutate(term = fct_reorder(term, s0)) %>%
+  ggplot(aes(x = s0, y = term, fill = s0 > 0)) +
+  geom_col(color = "white", show.legend = FALSE) +
+  scale_fill_manual(values = c("darkred", "darkblue")) +
+  labs(title = "Lasso Regression for Alcohol Impaired Driving Deaths",
+       x = "Coefficient Estimate",
+       y = "Predictor")
+
+
+```
+
+**It seems that percent American Indian and Alaska Native is the top predictor for alcohol impaired driving deaths** 
+
+**Now the same thing for drug overdose deaths ** 
+
+
+```{r}
+x <- as.matrix(health_data_new |>  select(-drug_overdose_deaths))
+y <- health_data_new$drug_overdose_deaths
+
+# Perform cross-validation to find the optimal lambda for Lasso
+lasso_cv <- cv.glmnet(x, y, alpha = 1)
+
+# Fit the final Lasso regression model using the optimal lambda
+lasso_final <- glmnet(x, y, alpha = 1, lambda = lasso_cv$lambda.1se)
+
+# Extract the coefficients at the optimal lambda
+lasso_coef <- coef(lasso_final)
+
+lasso_coef
+# Convert the coefficients matrix to a tibble and filter out zero coefficients
+tidy_lasso_coef <- as_tibble(as.matrix(lasso_coef), rownames = "term") %>%
+  filter(term != "(Intercept)" & s0 != 0)
+
+# Visualize the coefficients
+tidy_lasso_coef %>%
+  mutate(term = fct_reorder(term, s0)) %>%
+  ggplot(aes(x = s0, y = term, fill = s0 > 0)) +
+  geom_col(color = "white", show.legend = FALSE) +
+  scale_fill_manual(values = c("darkred", "darkblue")) +
+  labs(title = "Lasso Regression for Drug Overdose Deaths",
+       x = "Coefficient Estimate",
+       y = "Predictor")
 
 ```
 
