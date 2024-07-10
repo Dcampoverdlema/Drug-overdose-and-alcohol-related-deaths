@@ -1,0 +1,60 @@
+```{r}
+library(tidyverse)
+library(janitor)
+library(tigris)
+```
+
+
+```{r}
+health_data <- read.csv("data/analytic_data2024.csv") |> 
+  slice(-1) |> 
+  clean_names()
+options(tigris_use_cache = TRUE)
+
+# Get county shapefiles
+counties <- counties(cb = TRUE)
+
+# Calculate the area in square miles
+counties <- counties %>%
+  mutate(area = ALAND / 2589988.110336)  # Convert square meters to square miles
+
+# Select relevant columns
+county_area_data <- counties %>%
+  select(GEOID, area)
+
+# Display the first few rows of the county area data
+head(county_area_data)
+
+health_data <- health_data %>%
+  left_join(county_area_data, by = c("x5_digit_fips_code" = "GEOID"))
+
+# Calculate population density
+health_data <- health_data %>%
+  mutate(population_raw_value = as.numeric(population_raw_value)) |> 
+  mutate(population_density = population_raw_value / area)
+
+# Display the first few rows of the updated data
+head(health_data)
+
+```
+
+
+```{r}
+  
+health_data <- health_data |> 
+  filter(county_fips_code != "000")
+  
+
+# select(
+   # contains("raw_value"),
+    
+ # )
+health_data <- health_data |> 
+  select(name, alcohol_impaired_driving_deaths_raw_value, high_school_graduation_raw_value, unemployment_raw_value, median_household_income_raw_value, children_in_single_parent_households_raw_value, social_associations_raw_value, drug_overdose_deaths_raw_value, disconnected_youth_raw_value, homicides_raw_value, suicides_raw_value, population_raw_value, population_density, x_below_18_years_of_age_raw_value, x_65_and_older_raw_value, x_non_hispanic_black_raw_value, x_american_indian_or_alaska_native_raw_value, x_hispanic_raw_value, x_female_raw_value)
+
+```
+
+```{r}
+write.csv(health_data, "data/final_data.csv")
+```
+
