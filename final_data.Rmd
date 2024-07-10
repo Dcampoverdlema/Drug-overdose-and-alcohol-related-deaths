@@ -55,6 +55,15 @@ health_data <- health_data |>
 ```
 
 ```{r}
+health_data <- health_data |> 
+  rename_with(~ str_remove(., "_raw_value")) |> 
+  rename_with(~ str_remove(., "x_")) 
+  
+
+```
+
+
+```{r}
 write.csv(health_data, "data/final_data.csv")
 ```
 

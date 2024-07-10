@@ -9,23 +9,23 @@ library(forcats)
 
 
 ```{r}
-health <- read_csv("../data/health_data_selected.csv")
+health_ar <- read_csv("../data/final_data.csv")
 
-str(health)
+str(health_ar)
 ```
 
 
 ```{r}
-health <- health |> 
-  select(-living_wage) |>
+health_ar <- health_ar |> 
+  select(-name) |>
   filter(population > 3000) |> 
   mutate(across(everything(), ~ifelse(is.na(.), mean(., na.rm = TRUE), .)))
-head(health)
+head(health_ar)
 
 
 # Prepare the predictors and response
-x <- as.matrix(health |>  select(-alcohol_impaired_driving_deaths))
-y <- health$alcohol_impaired_driving_deaths
+x <- as.matrix(health_ar |>  select(-alcohol_impaired_driving_deaths))
+y <- health_ar$alcohol_impaired_driving_deaths
 
 ```
 

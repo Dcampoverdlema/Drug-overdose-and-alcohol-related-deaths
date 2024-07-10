@@ -9,22 +9,22 @@ library(forcats)
 
 
 ```{r}
-health <- read_csv("../data/health_data_selected.csv")
+health_dr <- read_csv("../data/final_data.csv")
 
-str(health)
+str(health_dr)
 ```
 
 
 ```{r}
-health <- health |> 
-  select(-living_wage) |>
+health_dr <- health_dr |> 
+  select(-name) |>
   mutate(across(everything(), ~ifelse(is.na(.), mean(., na.rm = TRUE), .)))
-head(health)
+head(health_dr)
 
 
 # Prepare the predictors and response
-x <- as.matrix(health |>  select(-drug_overdose_deaths))
-y <- health$drug_overdose_deaths
+x <- as.matrix(health_dr |>  select(-drug_overdose_deaths))
+y <- health_dr$drug_overdose_deaths
 
 ```
 
