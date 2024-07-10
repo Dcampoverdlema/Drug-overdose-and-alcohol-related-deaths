@@ -34,7 +34,7 @@ source: https://www.countyhealthrankings.org/health-data/health-factors/health-b
 
 **The data is collected by the University of Wisconsin Population Health Institute. It assigns a ranking based on health outcomes and health factors to each county in every state. There was originally 770 variables in the data set.**
 
-**Since the data set is so big, we decided that we should create another data set with only the variables we want to look at with relation to drug overdose deaths and alcohol impaired driving deaths.** 
+**Since the data set is so big, we decided that we should create another data set with only the variables we want to look at with relation to drug overdose deaths and alcohol impaired driving deaths. This is all demographic and social variables** 
 
 ```{r} 
 library(janitor)
@@ -46,11 +46,32 @@ library(sf)
 
 
 ```{r, include=FALSE}
-health_data <- read.csv("data/analytic_data2024.csv") |>   
+
+health_data_new <- read.csv("data/health_data_selected.csv") |>  
   slice(-1) |> 
+  mutate(across(everything(), ~ifelse(is.na(.) | . == 0, mean(., na.rm = TRUE), .))) |>  
+  select(alcohol_impaired_driving_deaths, unemployment, median_household_income, children_in_single_parent_households,social_associations, drug_overdose_deaths, disconnected_youth, homicides, suicides,percent_below_18_years_of_age, percent_65_and_older, percent_native_hawaiian_or_other_pacific_islander, percent_non_hispanic_black, percent_hispanic, percent_female, -living_wage, population)
+
+```
+ 
+**Upon inspection, we found that the variable of drug overdose deaths had lots of N/A values and we want to make sure this is clean as this is one of the main variables we want to look at. ** 
+
+**Also rename the data so that it can be read easier**
+
+```{r, include=FALSE} 
+
+```
+
+# Intial EDA 
+
+Lets look at the state comparisons for drug overdose deaths and alcohol impaired driving deaths. This can help us locate any patterns potentially in the future.  
+
+
+```{r, include=FALSE} 
+health_data <- read.csv("data/analytic_data2024.csv") %>%  
   clean_names()
 
-selected_data <- health_data |>  
+selected_data <- health_data %>% 
   select(
     state_fips_code, county_fips_code, state_abbreviation, name,
     drug_overdose_deaths_raw_value, alcohol_impaired_driving_deaths_raw_value,
@@ -65,7 +86,7 @@ selected_data <- health_data |>
     x_female_raw_value, x_rural_raw_value
   )
 
-# convert to numeric 
+# Convert relevant columns to numeric
 selected_data <- selected_data |> 
   mutate(across(
     starts_with("drug_overdose_deaths_raw_value") | starts_with("alcohol_impaired_driving_deaths_raw_value") |
@@ -82,102 +103,219 @@ selected_data <- selected_data |>
       starts_with("x_female_raw_value") | starts_with("x_rural_raw_value"),
     as.numeric
   ))
-
-
-```
- 
-**Upon inspection, we found that the variable of drug overdose deaths had lots of N/A values and we want to make sure this is clean as this is one of the main variables we want to look at. ** 
-
-**Also rename the data so that it can be read easier**
-
-```{r, include=FALSE} 
-imputed_data <- read_csv("imputed_data.csv") |> 
-  mutate(across(everything(), ~ifelse(is.na(.) | . == 0, mean(., na.rm = TRUE), .))) |> 
-  rename(
-    ID = ...1,
-    Drug_Overdose_Deaths = drug_overdose_deaths_raw_value,
-    Alcohol_Impaired_Driving_Deaths = alcohol_impaired_driving_deaths_raw_value,
-    Unemployment_Rate = unemployment_raw_value,
-    Income_Inequality = income_inequality_raw_value,
-    Highschool_Comp_Rate = high_school_completion_raw_value,
-    Adult_Smoking_Rate = adult_smoking_raw_value,
-    Excessive_Drinking_Rate = excessive_drinking_raw_value,
-    Median_House_Income = median_household_income_raw_value,
-    College_Education_Rate = some_college_raw_value,
-    Children_In_Poverty = children_in_poverty_raw_value,
-    Single_Parent_House = children_in_single_parent_households_raw_value,
-    Social_Associations = social_associations_raw_value,
-    Pop_Under_18 = x_below_18_years_of_age_raw_value,
-    Pop_Over_65 = x_65_and_older_raw_value,
-    NH_Black = x_non_hispanic_black_raw_value,
-    American_Or_Alaska_Native = x_american_indian_or_alaska_native_raw_value,
-    Asian_Pop = x_asian_raw_value,
-    Pacific_Islander = x_native_hawaiian_or_other_pacific_islander_raw_value,
-    Hispanic_Pop = x_hispanic_raw_value,
-    NH_White = x_non_hispanic_white_raw_value,
-    English_Profic = x_not_proficient_in_english_raw_value,
-    Female_Pop = x_female_raw_value,
-    Rural_Pop = x_rural_raw_value
-  )
- 
 ```
 
-# Methods
-
-**First, we needed to find our variables of interest. We decided to find the p-values for drug overdose deaths and alcohol impaired deaths.**
-
-**Going to look at drug overdose deaths first:** 
 
 ```{r} 
+library(maps)
+state_data <- selected_data |>
+  filter(county_fips_code=='000',state_abbreviation!="US", state_abbreviation !="DC") |>  
+  rename(state=name) 
+state_data$state <- tolower(state_data$state)
 
-model_drug <- lm(drug_overdose_deaths_raw_value ~ unemployment_raw_value + income_inequality_raw_value + 
-                   high_school_completion_raw_value + adult_smoking_raw_value + excessive_drinking_raw_value + 
-                   median_household_income_raw_value + some_college_raw_value + children_in_poverty_raw_value + 
-                   children_in_single_parent_households_raw_value + social_associations_raw_value + 
-                   x_below_18_years_of_age_raw_value + x_65_and_older_raw_value + 
-                   x_non_hispanic_black_raw_value + x_american_indian_or_alaska_native_raw_value + 
-                   x_asian_raw_value + x_native_hawaiian_or_other_pacific_islander_raw_value + 
-                   x_hispanic_raw_value + x_non_hispanic_white_raw_value + 
-                   x_not_proficient_in_english_raw_value + x_female_raw_value + 
-                   x_rural_raw_value, data = selected_data)
+us_states_map <- map_data("state")
 
-summary(model_drug)
+merged_data <- us_states_map %>%
+  left_join(state_data, by = c("region" = "state"))
+
+ggplot(data = merged_data, aes(x = long, y = lat, group = group)) +
+  geom_polygon(aes(fill = drug_overdose_deaths_raw_value), color = "white") +
+  scale_fill_viridis_c(option = "plasma", na.value = "grey50") +
+  coord_fixed(1.3)+
+ theme_minimal() +  # Apply the minimal theme
+  theme(
+    axis.title = element_blank(),
+    axis.text = element_blank(),
+    axis.ticks = element_blank(),  # Remove axis ticks
+    text = element_text(family = "serif"),  # Set global text family to serif
+    plot.title = element_text(hjust = 0.5, face = "bold", size = 14),  # Center, bold the title, and increase font size
+    plot.subtitle = element_text(hjust = 0.5, face = "plain", size = 8),  # Center the subtitle, normal weight, and reduce font size
+    plot.caption = element_text(face = "italic", size = 6, hjust = 0)  # Italicize, reduce font size of the caption, and left-align
+  ) +
+  labs(
+    title = "Drug Overdose Deaths by State",
+    subtitle = "Data source: County Health Rankings & Roadmaps (https://www.countyhealthrankings.org/)",
+    fill = "*Drug Overdose Deaths",
+    caption = "*Number of drug overdose deaths"
+  )
+
+
+ggplot(data = merged_data, aes(x = long, y = lat, group = group)) +
+  geom_polygon(aes(fill = alcohol_impaired_driving_deaths_raw_value), color = "white") +
+  scale_fill_viridis_c(option = "plasma", na.value = "grey50", labels = scales::percent_format(scale = 100)) +
+  coord_fixed(1.3) +
+  theme_minimal() +  # Apply the minimal theme
+  theme(
+    axis.title = element_blank(),
+    axis.text = element_blank(),
+    axis.ticks = element_blank(),  # Remove axis ticks
+    text = element_text(family = "serif"),  # Set global text family to serif
+    plot.title = element_text(hjust = 0.5, face = "bold", size = 14),  # Center, bold the title, and increase font size
+    plot.subtitle = element_text(hjust = 0.5, face = "plain", size = 8),  # Center the subtitle, normal weight, and reduce font size
+    plot.caption = element_text(face = "italic", size = 6, hjust = 0)  # Italicize, reduce font size of the caption, and left-align
+  ) +
+  labs(
+    title = "Alcohol Impaired Driving Deaths by State",
+    subtitle = "Data source: County Health Rankings & Roadmaps (https://www.countyhealthrankings.org/)",
+    fill = "*Alcohol Driving Deaths",
+    caption = "*Percentage of motor vehicle crash deaths with alcohol involvement."
+  )
+
 
 
 ```
-**Unemployment and income inequality are strong positive predictors, meaning higher rates are associated with higher outcomes of interest. Adult smoking and female percentage are also positive predictors. Excessive drinking and under 18 population have significant negative effects. These are our variables of interest while looking at drug overdose deaths **
 
-**Now looking at alcohol impaired driving deaths:** 
+## Correlation 
+
+**We want to see what variables have correlation to our response variables, drug overdose deaths and alcohol impaired driving deaths**
 
 ```{r}
-model_alcohol <- lm(alcohol_impaired_driving_deaths_raw_value ~ unemployment_raw_value + income_inequality_raw_value + 
-                      high_school_completion_raw_value + adult_smoking_raw_value + excessive_drinking_raw_value + 
-                      median_household_income_raw_value + some_college_raw_value + children_in_poverty_raw_value + 
-                      children_in_single_parent_households_raw_value + social_associations_raw_value + 
-                      x_below_18_years_of_age_raw_value + x_65_and_older_raw_value + 
-                      x_non_hispanic_black_raw_value + x_american_indian_or_alaska_native_raw_value + 
-                      x_asian_raw_value + x_native_hawaiian_or_other_pacific_islander_raw_value + 
-                      x_hispanic_raw_value + x_non_hispanic_white_raw_value + 
-                      x_not_proficient_in_english_raw_value + x_female_raw_value + 
-                      x_rural_raw_value, data = selected_data)
+cor_matrix_d <- cor(health_data_new)
+cor_matrix_a <- cor(health_data_new)
 
-summary(model_alcohol)
+# DRUG
+drug_correlations <- cor_matrix_d["drug_overdose_deaths", ]
+
+# Convert to data frame for ggplot
+drug_cor_df <- data.frame(
+  Variable = names(drug_correlations),
+  Correlation = as.numeric(drug_correlations)
+)
+
+# Plot
+ggplot(drug_cor_df, aes(x = reorder(Variable, Correlation), y = Correlation, fill = Correlation > 0)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +  
+  labs(title = "Correlation: Drug Overdose Deaths", x = "Variable", y = "Correlation") +
+  scale_fill_manual(values = c("red", "blue"), name = "Correlation Type",
+                    labels = c("Negative", "Positive")) +
+  theme_minimal() +
+  theme(
+    text = element_text(family = "serif", size = 12),
+    plot.background = element_rect(fill = "white", colour = "white"),
+    panel.background = element_rect(fill = "white", colour = "white")
+  )
+```
+
+
+
+
+```{r}
+# ALC !!
+alcohol_correlations <- cor_matrix_a["alcohol_impaired_driving_deaths", ]
+
+# Convert to data frame for ggplot
+alcohol_cor_df <- data.frame(
+  Variable = names(alcohol_correlations),
+  Correlation = as.numeric(alcohol_correlations)
+)
+
+# Plot
+ggplot(alcohol_cor_df, aes(x = reorder(Variable, Correlation), y = Correlation, fill = Correlation > 0)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +  # Flips the axes for better readability
+  labs(title = "Correlation: Alcohol-Impaired Driving Deaths", x = "Variable", y = "Correlation") +
+  scale_fill_manual(values = c("red", "blue"), name = "Correlation Type",
+                    labels = c("Negative", "Positive")) +
+  theme_minimal() +
+  theme(
+    text = element_text(family = "serif", size = 12),
+    plot.background = element_rect(fill = "white", colour = "white"),
+    panel.background = element_rect(fill = "white", colour = "white")
+  )
+```
+
+
+
+```{r}
+
 
 ```
 
-**Unemployment, excessive drinking, elderly population, and English proficiency are significant factors associated with the outcome of interest. These are our variables of interest while looking at alcohol impaired driving deaths.**  
+## Regression 
+
+**Now to confirm what we see in the correlation matrices from before, we will conduct regression analysis to pick our predictors for drug overdose deaths and alcohol impaired deaths.** 
+
+
+**Lasso Regression** 
 
 ```{r}
+
+library(tidyverse)
+library(glmnet)
+library(corrplot)
+library(vip)
+library(forcats)
+
+
+health_data_alc <- health_data_new |> 
+  filter(population > 3000) |> 
+  mutate(across(everything(), ~ifelse(is.na(.), mean(., na.rm = TRUE), .)))
+
+x <- as.matrix(health_data_alc |>  select(-alcohol_impaired_driving_deaths))
+y <- health_data_alc$alcohol_impaired_driving_deaths
+
+
+# Perform cross-validation to find the optimal lambda for Lasso
+lasso_cv <- cv.glmnet(x, y, alpha = 1)
+
+# Fit the final Lasso regression model using the optimal lambda
+lasso_final <- glmnet(x, y, alpha = 1, lambda = lasso_cv$lambda.1se)
+
+
+# Extract the coefficients at the optimal lambda
+lasso_coef <- coef(lasso_final)
+
+lasso_coef
+# Convert the coefficients matrix to a tibble and filter out zero coefficients
+tidy_lasso_coef <- as_tibble(as.matrix(lasso_coef), rownames = "term") %>%
+  filter(term != "(Intercept)" & s0 != 0)
+
+# Visualize the coefficients
+tidy_lasso_coef %>%
+  mutate(term = fct_reorder(term, s0)) %>%
+  ggplot(aes(x = s0, y = term, fill = s0 > 0)) +
+  geom_col(color = "white", show.legend = FALSE) +
+  scale_fill_manual(values = c("darkred", "darkblue")) +
+  labs(title = "Lasso Regression for Alcohol Impaired Driving Deaths",
+       x = "Coefficient Estimate",
+       y = "Predictor")
 
 
 ```
 
-## Correlation matrix 
+**It seems that percent American Indian and Alaska Native is the top predictor for alcohol impaired driving deaths** 
 
-**This is a better visual of the correlations to find our variables of interest** 
+**Now the same thing for drug overdose deaths ** 
+
 
 ```{r}
+x <- as.matrix(health_data_new |>  select(-drug_overdose_deaths))
+y <- health_data_new$drug_overdose_deaths
 
+# Perform cross-validation to find the optimal lambda for Lasso
+lasso_cv <- cv.glmnet(x, y, alpha = 1)
+
+# Fit the final Lasso regression model using the optimal lambda
+lasso_final <- glmnet(x, y, alpha = 1, lambda = lasso_cv$lambda.1se)
+
+# Extract the coefficients at the optimal lambda
+lasso_coef <- coef(lasso_final)
+
+lasso_coef
+# Convert the coefficients matrix to a tibble and filter out zero coefficients
+tidy_lasso_coef <- as_tibble(as.matrix(lasso_coef), rownames = "term") %>%
+  filter(term != "(Intercept)" & s0 != 0)
+
+# Visualize the coefficients
+tidy_lasso_coef %>%
+  mutate(term = fct_reorder(term, s0)) %>%
+  ggplot(aes(x = s0, y = term, fill = s0 > 0)) +
+  geom_col(color = "white", show.legend = FALSE) +
+  scale_fill_manual(values = c("darkred", "darkblue")) +
+  labs(title = "Lasso Regression for Drug Overdose Deaths",
+       x = "Coefficient Estimate",
+       y = "Predictor")
 
 ```
 
