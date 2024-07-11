@@ -1,0 +1,37 @@
+```{r}
+# Load necessary libraries
+library(tidyverse)
+library(ranger)
+library(vip)
+```
+
+```{r}
+data <- read_csv("../data/health_data_selected.csv")
+
+```
+
+
+# Prepare the data
+```{f}
+data <- data |> 
+  drop_na(drug_overdose_deaths)  # Remove rows with missing response variable
+
+# Split the data into predictors and response
+model_x <- data |> 
+  select(-drug_overdose_deaths)  # All columns except the response variable
+
+model_y <- data$drug_overdose_deaths  # Response variable
+
+# Fit a Random Forest model
+rf_model <- ranger(drug_overdose_deaths ~ ., data = data,
+                   num.trees = 500, importance = "impurity")
+```
+
+# View the model summary
+```{r}
+print(rf_model)
+
+# Plot variable importance
+vip(rf_model)
+
+```

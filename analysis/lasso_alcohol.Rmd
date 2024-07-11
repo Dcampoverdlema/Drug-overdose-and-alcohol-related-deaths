@@ -9,7 +9,7 @@ library(forcats)
 
 
 ```{r}
-health <- read_csv("../data/health_data_selected.csv")
+health <- read_csv("../data/final_data.csv")
 
 str(health)
 ```
@@ -17,7 +17,7 @@ str(health)
 
 ```{r}
 health <- health |> 
-  select(-living_wage) |>
+  select(-name) |>
   filter(population > 3000) |> 
   mutate(across(everything(), ~ifelse(is.na(.), mean(., na.rm = TRUE), .)))
 head(health)
@@ -28,6 +28,17 @@ x <- as.matrix(health |>  select(-alcohol_impaired_driving_deaths))
 y <- health$alcohol_impaired_driving_deaths
 
 ```
+```{r}
+healtha_lm <- lm(alcohol_impaired_driving_deaths ~ ., data = health)
+library(broom)
+healtha_lm |> 
+  tidy() |> 
+  mutate(term = fct_reorder(term, estimate)) |> 
+  ggplot(aes(x = estimate, y = term, 
+             fill = estimate > 0)) +
+  geom_col(color = "white", show.legend = FALSE) +
+  scale_fill_manual(values = c("darkred", "darkblue"))
+```
 
 
 ```{r}
@@ -35,9 +46,10 @@ y <- health$alcohol_impaired_driving_deaths
 lasso_cv <- cv.glmnet(x, y, alpha = 1)
 
 # Fit the final Lasso regression model using the optimal lambda
-lasso_final <- glmnet(x, y, alpha = 1, lambda = lasso_cv$lambda.1se)
+lasso_final <- glmnet(x, y, alpha = 1, lambda = lasso_cv$lambda.min)
 
-
+plot(lasso_cv, xvar = "lambda", label = TRUE) |> 
+title("lasso Regression Coefficients")
 ```
 
 
@@ -48,7 +60,7 @@ lasso_coef <- coef(lasso_final)
 lasso_coef
 # Convert the coefficients matrix to a tibble and filter out zero coefficients
 tidy_lasso_coef <- as_tibble(as.matrix(lasso_coef), rownames = "term") %>%
-  filter(term != "(Intercept)" & s0 != 0)
+  filter(term != "(Intercept)")
 
 # Visualize the coefficients
 tidy_lasso_coef %>%

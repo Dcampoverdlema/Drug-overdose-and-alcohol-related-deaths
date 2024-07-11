@@ -1,0 +1,75 @@
+```{r}
+# Load necessary libraries
+library(tidyverse)
+library(glmnet)
+library(broom)
+library(ggfortify)  
+
+```
+
+```{r}
+health <- read_csv("../data/final_data.csv")
+
+health <- health |> 
+  select(-name, -...1, -population) |> 
+  mutate(across(everything(), ~ifelse(is.na(.), mean(., na.rm = TRUE), .)))
+
+head(health)
+```
+
+
+```{r}
+response <- health$alcohol_impaired_driving_deaths
+predictors <- as.matrix(health |>  select(-alcohol_impaired_driving_deaths))
+
+set.seed(123)  
+cv_fit <- cv.glmnet(predictors, response, alpha = 1, nfolds = 10)
+
+print(cv_fit)
+
+plot(cv_fit)
+
+best_lambda <- cv_fit$lambda.min
+print(paste("Best lambda value: ", best_lambda))
+
+final_model <- glmnet(predictors, response, alpha = 1, lambda = best_lambda)
+
+print(coef(final_model))
+
+
+```
+qqplot model diagnostic 
+
+```{r}
+health_lm <- lm(alcohol_impaired_driving_deaths ~ ., data = health)
+
+health_lm |> 
+  tidy() |> 
+  mutate(
+    term = gsub("_", " ", term),
+    term = sapply(term, function(x) { paste(toupper(substring(x, 1, 1)), substring(x, 2), sep = "", collapse = " ") }), 
+    term = case_when(
+      p.value <= 0.001 ~ paste0(term, "***"),
+      p.value <= 0.01 ~ paste0(term, "**"),
+      p.value <= 0.05 ~ paste0(term, "*"),
+      p.value <= 0.1 ~ paste0(term, "."),
+      TRUE ~ term
+    ),
+    term = fct_reorder(term, estimate)
+  ) |> 
+  ggplot(aes(x = estimate, y = term, fill = estimate)) +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "black") +
+  geom_errorbarh(aes(xmin = estimate - std.error, xmax = estimate + std.error), 
+                 height = 0.2, linewidth = 1.4, color = "red", show.legend = FALSE) +
+  geom_point(aes(color = estimate), size = 1.5, shape = 21, fill = "black", show.legend = FALSE) +
+  labs(y = NULL) +
+  theme_bw()
+```
+
+
+```{r}
+health_lm |> 
+  autoplot() +
+  theme_light()
+```
+

@@ -1,0 +1,68 @@
+```{r}
+library(tidyverse)
+library(glmnet)
+```
+
+
+```{r}
+health_tta <- read_csv("../data/final_data.csv")
+
+
+health_tta <- health_tta |> 
+  select(-name, -...1) |>
+  mutate(across(everything(), ~ifelse(is.na(.), mean(., na.rm = TRUE), .)))
+```
+
+
+```{r}
+set.seed(101)
+k <- 5
+health_tta <- health_tta |>
+  mutate(test_fold = sample(rep(1:k, length.out = n())))
+```
+
+
+```{r}
+get_test_pred <- function(k) {
+  test_data <- health_tta |> filter(test_fold == k)                     # get test and training data
+  train_data <- health_tta |> filter(test_fold != k)
+  test_x <- as.matrix(select(test_data, -alcohol_impaired_driving_deaths))            # get test and training matrices
+  train_x <- as.matrix(select(train_data, -alcohol_impaired_driving_deaths))
+  
+  lm_fit <- lm(alcohol_impaired_driving_deaths ~ ., data = train_data)                  # fit models to training data
+  ridge_fit <- cv.glmnet(train_x, train_data$alcohol_impaired_driving_deaths, alpha = 0)
+  lasso_fit <- cv.glmnet(train_x, train_data$alcohol_impaired_driving_deaths, alpha = 1)
+  enet_fit <- cv.glmnet(train_x, train_data$alcohol_impaired_driving_deaths, alpha = 0.5)
+  
+  tibble(lm_pred = predict(lm_fit, newdata = test_data),              # return test results
+         ridge_pred = as.numeric(predict(ridge_fit, newx = test_x)),
+         lasso_pred = as.numeric(predict(lasso_fit, newx = test_x)),
+         enet_pred = as.numeric(predict(enet_fit, newx = test_x)),
+         test_actual = test_data$alcohol_impaired_driving_deaths,
+         test_fold = k)
+}
+```
+
+
+```{r}
+test_pred_all <- map(1:k, get_test_pred) |> 
+  bind_rows()
+```
+
+
+```{r}
+test_pred_all |>
+  pivot_longer(lm_pred:enet_pred, 
+               names_to = "type", 
+               values_to = "test_pred") |>
+  group_by(type, test_fold) |>
+  summarize(
+    rmse = sqrt(mean((test_actual - test_pred)^2))
+  ) |> 
+  ggplot(aes(x = type, y = rmse)) + 
+  geom_point(size = 4) +
+  stat_summary(fun = mean, geom = "point", 
+               color = "red", size = 4) + 
+  stat_summary(fun.data = mean_se, geom = "errorbar", 
+               color = "red", width = 0.2)
+```

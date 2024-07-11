@@ -253,5 +253,21 @@ ggplot(alcohol_cor_df, aes(x = reorder(Variable, Correlation), y = Correlation, 
   )
 
 
+# ----------------------------------------------------------------------------
+health_data_new <- read.csv("data/health_data_selected.csv") |>  
+  slice(-1) |> 
+  mutate(across(everything(), ~ifelse(is.na(.) | . == 0, mean(., na.rm = TRUE), .))) |>  
+  select(alcohol_impaired_driving_deaths, unemployment, median_household_income, 
+         children_in_single_parent_households,social_associations, drug_overdose_deaths, 
+         disconnected_youth, homicides, suicides,percent_below_18_years_of_age, percent_65_and_older, 
+         percent_native_hawaiian_or_other_pacific_islander, percent_non_hispanic_black, 
+         percent_hispanic, percent_female, -living_wage)
+
+
+
+
+
+
+
 
 
