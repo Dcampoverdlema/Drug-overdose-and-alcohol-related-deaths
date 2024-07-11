@@ -9,8 +9,7 @@ library(forcats)
 
 
 ```{r}
-health <- read_csv("../data/health_data_selected.csv")
-
+health <- read_csv("data/health_data_selected.csv")
 str(health)
 ```
 
