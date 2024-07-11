@@ -3,6 +3,10 @@
 library(tidyverse)
 library(glmnet)
 library(broom)
+library(ggfortify)  
+```
+
+```{r}
 
 health <- read_csv("../data/final_data.csv")
 
@@ -44,10 +48,10 @@ health_lm |>
     term = gsub("_", " ", term),
     term = sapply(term, function(x) { paste(toupper(substring(x, 1, 1)), substring(x, 2), sep = "", collapse = " ") }), 
     term = case_when(
-      p.value <= 0.001 ~ paste0(term, " ***"),
-      p.value <= 0.01 ~ paste0(term, " **"),
-      p.value <= 0.05 ~ paste0(term, " *"),
-      p.value <= 0.1 ~ paste0(term, " ."),
+      p.value <= 0.001 ~ paste0(term, "***"),
+      p.value <= 0.01 ~ paste0(term, "**"),
+      p.value <= 0.05 ~ paste0(term, "*"),
+      p.value <= 0.1 ~ paste0(term, "."),
       TRUE ~ term
     ),
     term = fct_reorder(term, estimate)
@@ -55,9 +59,17 @@ health_lm |>
   ggplot(aes(x = estimate, y = term, fill = estimate)) +
   geom_vline(xintercept = 0, linetype = "dashed", color = "black") +
   geom_errorbarh(aes(xmin = estimate - std.error, xmax = estimate + std.error), 
-                 height = 0.2, linewidth = 1, color = "red", show.legend = FALSE) +
-  geom_point(aes(color = estimate), size = 1.5, shape = 21, fill = "black", show.legend = FALSE) +
-  labs(y = NULL) +
+                 height = 0.2, linewidth = 2, color = "red", show.legend = FALSE) +
+  geom_point(aes(color = estimate), size = 1.8, shape = 21, fill = "black", show.legend = FALSE) +
+  labs(y = NULL,
+       x = "Coefficient") +
   theme_bw()
+```
+
+
+```{r}
+health_lm |> 
+  autoplot() +
+  theme_light()
 ```
 
