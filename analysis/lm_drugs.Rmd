@@ -2,11 +2,12 @@
 # Load necessary libraries
 library(tidyverse)
 library(glmnet)
+library(broom)
 
 health <- read_csv("../data/final_data.csv")
 
 health <- health |> 
-  select(-name, -...1) |> 
+  select(-name, -...1, -population) |> 
   mutate(across(everything(), ~ifelse(is.na(.), mean(., na.rm = TRUE), .)))
 
 head(health)
@@ -34,13 +35,29 @@ print(coef(final_model))
 
 ```{r}
 health_lm <- lm(drug_overdose_deaths ~ ., data = health)
-library(broom)
+
+summary(health_lm)
+
 health_lm |> 
   tidy() |> 
-  mutate(term = fct_reorder(term, estimate)) |> 
-  ggplot(aes(x = estimate, y = term, 
-             fill = estimate > 0)) +
-  geom_col(color = "white", show.legend = FALSE) +
-  scale_fill_manual(values = c("darkred", "darkblue"))
+  mutate(
+    term = gsub("_", " ", term),
+    term = sapply(term, function(x) { paste(toupper(substring(x, 1, 1)), substring(x, 2), sep = "", collapse = " ") }), 
+    term = case_when(
+      p.value <= 0.001 ~ paste0(term, " ***"),
+      p.value <= 0.01 ~ paste0(term, " **"),
+      p.value <= 0.05 ~ paste0(term, " *"),
+      p.value <= 0.1 ~ paste0(term, " ."),
+      TRUE ~ term
+    ),
+    term = fct_reorder(term, estimate)
+  ) |> 
+  ggplot(aes(x = estimate, y = term, fill = estimate)) +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "black") +
+  geom_errorbarh(aes(xmin = estimate - std.error, xmax = estimate + std.error), 
+                 height = 0.2, linewidth = 1, color = "red", show.legend = FALSE) +
+  geom_point(aes(color = estimate), size = 1.5, shape = 21, fill = "black", show.legend = FALSE) +
+  labs(y = NULL) +
+  theme_bw()
 ```
 
