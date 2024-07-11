@@ -264,17 +264,8 @@ health_data_new <- read.csv("data/health_data_selected.csv") |>
          percent_hispanic, percent_female, -living_wage)
 
 
-library(tidyverse)
 
-drug_logit <- glm(drug_overdose_deaths ~ homicides + unemployment,
-                  data=health_data_new) 
 
-library(pROC)
-hr_roc <- batted_balls |> 
-  mutate(pred_hr = predict(hr_logit, type = "response")) |> 
-  roc(is_hr, pred_hr)
-# str(hr_roc)
-hr_roc$auc
 
 
 
