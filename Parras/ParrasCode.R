@@ -265,7 +265,16 @@ health_data_new <- read.csv("data/health_data_selected.csv") |>
 
 
 
+#----------
+health_data_new <- read.csv("data/final_data.csv") |>  
+  mutate(across(everything(), ~ifelse(is.na(.) | . == 0, mean(., na.rm = TRUE), .))) |>  
+  select(-name,-X,-population)
 
+
+health_data_new %>%  
+  ggplot(aes(x=unemployment, y=drug_overdose_deaths)) +
+  geom_point(color="blue",size=3,alpha=0.5) +
+  theme_light()
 
 
 
