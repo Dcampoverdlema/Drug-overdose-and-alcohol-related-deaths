@@ -1,0 +1,83 @@
+```{r}
+library(tidyverse)
+```
+
+
+
+```{r}
+eda_d <- read_csv("../data/final_data.csv")
+
+str(eda_d)
+
+eda_d <- eda_d |> 
+  select(-name, -...1, -population) |> 
+  mutate(across(everything(), ~ifelse(is.na(.), mean(., na.rm = TRUE), .)))
+```
+
+
+
+```{r}
+eda_d |> 
+  ggplot(aes(x = unemployment, y = drug_overdose_deaths)) +
+  geom_point() +
+  geom_smooth(method = "lm", col = "blue") +
+  theme_minimal() +
+  labs(title = "Drug Overdose Deaths vs Unemployment",
+       x = "Unemployment (%)",
+       y = "Drug Overdose Deaths per 100,000")
+
+eda_d |> 
+  ggplot(aes(x = children_in_single_parent_households, y = drug_overdose_deaths)) +
+  geom_point() +
+  geom_smooth(method = "lm", col = "blue") +
+  theme_minimal() +
+  labs(title = "Drug Overdose Deaths vs Children in Single Parent Households",
+       x = "Children in Single Parent Households (%)",
+       y = "Drug Overdose Deaths per 100,000")
+
+eda_d |> 
+  ggplot(aes(x = population_density, y = drug_overdose_deaths)) +
+  geom_point() +
+  geom_smooth(method = "lm", col = "blue") +
+  theme_minimal() +
+  labs(title = "Drug Overdose Deaths vs Population Density",
+       x = "Population Density",
+       y = "Drug Overdose Deaths per 100,000")
+
+eda_d |> 
+  ggplot(aes(x = median_household_income, y = drug_overdose_deaths)) +
+  geom_point() +
+  geom_smooth(method = "lm", col = "blue") +
+  theme_minimal() +
+  labs(title = "Drug Overdose Deaths vs Median Household Income",
+       x = "Median Household Income ($)",
+       y = "Drug Overdose Deaths per 100,000")
+
+eda_d |> 
+  ggplot(aes(x = social_associations, y = drug_overdose_deaths)) +
+  geom_point() +
+  geom_smooth(method = "lm", col = "blue") +
+  theme_minimal() +
+  labs(title = "Drug Overdose Deaths vs Social Associations",
+       x = "Social Associations",
+       y = "Drug Overdose Deaths per 100,000")
+
+eda_d |> 
+  ggplot(aes(x = hispanic, y = drug_overdose_deaths)) +
+  geom_point() +
+  geom_smooth(method = "lm", col = "blue") +
+  theme_minimal() +
+  labs(title = "Drug Overdose Deaths vs Hispanic",
+       x = "Hispanic (%)",
+       y = "Drug Overdose Deaths per 100,000") 
+
+eda_d |> 
+  ggplot(aes(x = american_indian_or_alaska_native, y = drug_overdose_deaths)) +
+  geom_point() +
+  geom_smooth(method = "lm", col = "blue") +
+  theme_minimal() +
+  labs(title = "Drug Overdose Deaths vs American Indian or Alaska Native",
+       x = "American Indian or Alaska Native (%)",
+       y = "Drug Overdose Deaths per 100,000")
+```
+
