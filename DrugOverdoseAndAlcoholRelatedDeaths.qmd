@@ -238,8 +238,8 @@ test_pred_all |>
     axis.text.y = element_text(size = 14, ),
     axis.text.x = element_text(size= 14, ),
     plot.title = element_text(size = 20)
-  )
-
+  ) +
+  scale_x_discrete(labels=c("enet_pred"="Elastic","lasso_pred"="Lasso","lm_pred"="Linear","ridge_pred"="Ridge"))
 ```
 **We should use a linear model for alcohol since there is no intersection with the other models**
 
@@ -295,7 +295,8 @@ test_pred_all |>
     axis.text.y = element_text(size = 14, ),
     axis.text.x = element_text(size= 14, ),
     plot.title = element_text(size = 20)
-  )
+  ) +
+  scale_x_discrete(labels=c("enet_pred"="Elastic","lasso_pred"="Lasso","lm_pred"="Linear","ridge_pred"="Ridge"))
 
 ```
 **All of the models intersect so there isn't a "best" model to work with it so we will use linear model since that is what we are using for alcohol** 
@@ -308,7 +309,8 @@ test_pred_all |>
 
 First lets look at alcohol impaired driving deaths 
 ```{r}
-alcohol_lm <- lm(alcohol_impaired_driving_deaths ~ ., data=health_data_new)
+
+alcohol_lm <- lm(alcohol_impaired_driving_deaths ~ . , data=health_data_new)
 
 alcohol_lm |>
   tidy() |>
@@ -324,6 +326,7 @@ alcohol_lm |>
     ),
     term = fct_reorder(term, estimate)
   ) |>
+  select(-test_fold) |> 
   ggplot(aes(x = estimate, y = term, fill = estimate)) +
   geom_vline(xintercept = 0, linetype = "dashed", color = "black") +
   geom_errorbarh(aes(xmin = estimate - std.error, xmax = estimate + std.error),
@@ -340,9 +343,13 @@ alcohol_lm |>
   )
 
 ```
-**65 and older is the most important predictor when it comes to alcohol impaired driving deaths**
+The substantial positive coefficients of variables such as "X65 and older," "Unemployment," "American indian or Alaska native," and "Median household income" indicate that these characteristics are linked to a rise in the number of alcohol-impaired driving deaths.
+
+Variables such as "Hispanic" and "Female" have noteworthy negative coefficients, indicating that these attributes are linked to a reduction in deaths resulting from alcohol-impaired driving.
+
 
 Now onto drug overdose deaths: 
+
 ```{r}
 
 drug_lm <- lm(drug_overdose_deaths ~., data=health_data_new)
@@ -376,7 +383,8 @@ drug_lm |>
   )
 
 ```
-**Unemployment is the most important predictor for drug overdose deaths** 
+The significant positive coefficients of variables such as Unemployment, Female, and Children in single parent households indicate that these factors are linked to a rise in drug overdose deaths.
+
 
 
 ```{r}
@@ -385,5 +393,5 @@ drug_lm |>
 
 ## Conclusion 
 
-So how can we help states like West Virginia that seem to have high drug overdose deaths? (add more)
+So after looking at our data, we really cant conclude about any predictors that are demographic and social. What we think is that there are social and demographic factors that affect health factors that then are predictors of 
 
