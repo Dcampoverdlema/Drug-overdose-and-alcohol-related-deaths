@@ -567,6 +567,8 @@ p + labs(caption = "*Restricting to counties with population > 3000 ")
 
 ```
 
+## visualizing disconnected youths vs alcohol involvement--colored by suicides and homicide rates
+
 ## exploring pop_den vs num of car crash deaths--is there a linear relationship?
 
 ```{r}
@@ -745,3 +747,93 @@ tidy_lasso_coef |>
   geom_vline(xintercept = drug_lasso_cv$lambda.1se, 
              linetype = "dashed", color = "red")
 ```
+
+## plotting pairswise plot to see what transformations to use (go back on this)
+
+```{r}
+# install.packages("gridExtra")
+library(gridExtra)
+library(tidyverse)
+library(GGally)
+health <- read_csv("data/final_data.csv") |> select(-'...1', -name) |> 
+  rename(X65_and_older = `65_and_older`)
+
+attach(health)
+
+# ggpairs(health)
+
+plot1<-ggplot(health, aes(x=high_school_graduation, y=alcohol_impaired_driving_deaths)) +
+  geom_point(alpha=0.4, color="red")
+plot2<-ggplot(health, aes(x=unemployment, y=alcohol_impaired_driving_deaths)) +
+  geom_point(alpha=0.4, color="red")
+plot3<-ggplot(health, aes(x=median_household_income, y=alcohol_impaired_driving_deaths)) +
+  geom_point(alpha=0.4, color="red")
+plot4<-ggplot(health, aes(x=children_in_single_parent_households, y=alcohol_impaired_driving_deaths)) +
+  geom_point(alpha=0.4, color="red")
+
+grid.arrange(plot1, plot2, plot3, plot4, ncol = 2, nrow = 2)
+
+x_variables <- names(health)[c(2:6, 8:18)]  # Adjust this range based on your actual dataset structure
+plots <- list()
+# Create an empty list to store plots
+
+for (var in x_variables) {
+  p <- ggplot(health, aes_string(x = var, y = "alcohol_impaired_driving_deaths")) +
+    geom_point(alpha = 0.4, color = "red") + 
+    labs(y="alcohol impaired")
+  plots[[var]] <- p  # Store each plot in the list with variable name as key
+}
+
+grid.arrange(grobs = plots, ncol = 4, nrow = 4)
+
+for (var in x_variables) {
+  p <- ggplot(health, aes_string(x = var, y = "drug_overdose_deaths")) +
+    geom_point(alpha = 0.4, color = "blue") + 
+    labs(y="drug overdose %")
+  plots[[var]] <- p  # Store each plot in the list with variable name as key
+}
+
+grid.arrange(grobs = plots, ncol = 4, nrow = 4)
+
+
+  
+plots <- list()
+# for (var in colnames(health)) {
+#   if(var != "alcohol_impaired_driving_deaths" && var != "drug_overdose_deaths") {
+#     p <- ggplot(health, aes_string(x = var, y = "alcohol_impaired_driving_deaths")) +
+#       geom_point() +
+#       ggtitle(paste("Scatter plot of", var, "vs alcohol imp driving"))
+#     plots[[length(plots) + 1]] <- p
+#   }
+# }
+# 
+# do.call("grid.arrange", c(plots, ncol = 3, nrow = 6))
+
+
+grid.arrange(plot1, plot2, plot3, plot4, ncol = 2, nrow = 2)
+
+# pairs(drug_overdose_deaths~., data=health)
+library(car)
+summary(powerTransform(cbind()~1))
+```
+
+```{r}
+ggplot(health, aes(x = unemployment, y = drug_overdose_deaths)) +
+  geom_point(alpha = 0.4, color = "blue") +
+  scale_x_continuous(trans="log")
+
+ggplot(health, aes(x = social_associations, y = drug_overdose_deaths)) +
+  geom_point(alpha = 0.4, color = "blue") +
+  scale_x_continuous(trans="log")
+  
+
+ggplot(health, aes(x = disconnected_youth, y = alcohol_impaired_driving_deaths)) +
+  geom_point(alpha = 0.4, color = "red") +
+  scale_x_continuous(trans="log")
+```
+
+```{r}
+health2 <- health |> select(-population)
+lm(alcohol_impaired_driving_deaths~log(high_school_graduation) + log(population_density) + log(american_indian_or_alaska_native) + log(suicides) )
+```
+Model diagnostics are not good
