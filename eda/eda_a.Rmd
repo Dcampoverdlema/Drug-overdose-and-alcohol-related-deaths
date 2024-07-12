@@ -1,0 +1,163 @@
+```{r}
+library(tidyverse)
+```
+
+
+
+```{r}
+eda_a <- read_csv("../data/final_data.csv")
+
+str(eda_a)
+
+eda_a <- eda_a |> 
+  select(-name, -...1, -population) |> 
+  mutate(across(everything(), ~ifelse(is.na(.), mean(., na.rm = TRUE), .)))
+```
+
+
+```{r}
+eda_a |> 
+ggplot(aes(x = unemployment, y = alcohol_impaired_driving_deaths)) +
+  geom_point() +
+  geom_smooth(method = "lm", col = "blue") +
+  theme_minimal() +
+  labs(title = "Alcohol-Impaired Driving Deaths vs Unemployment",
+       x = "Unemployment (%)",
+       y = "Alcohol-Impaired Driving Deaths")
+
+```
+
+
+```{r}
+eda_a <- eda_a %>%
+  filter(alcohol_impaired_driving_deaths != 1 & alcohol_impaired_driving_deaths != 0)
+
+
+
+eda_a |> 
+  ggplot(aes(x = unemployment, y = alcohol_impaired_driving_deaths)) +
+  geom_point() +
+  geom_smooth(method = "lm", col = "blue") +
+  theme_minimal() +
+  labs(title = "Alcohol-Impaired Driving Deaths vs Unemployment",
+       x = "Unemployment (%)",
+       y = "Alcohol-Impaired Driving Deaths")
+
+# Alcohol-Impaired Driving Deaths vs Age 65 and Older
+eda_a |> 
+  ggplot(aes(x = x65_and_older, y = alcohol_impaired_driving_deaths)) +
+  geom_point() +
+  geom_smooth(method = "lm", col = "blue") +
+  theme_minimal() +
+  labs(title = "Alcohol-Impaired Driving Deaths vs Age 65 and Older",
+       x = "Age 65 and Older (%)",
+       y = "Alcohol-Impaired Driving Deaths")
+
+# Alcohol-Impaired Driving Deaths vs American Indian or Alaska Native
+eda_a |> 
+ggplot(aes(x = american_indian_or_alaska_native, y = alcohol_impaired_driving_deaths)) +
+  geom_point() +
+  geom_smooth(method = "lm", col = "blue") +
+  theme_minimal() +
+  labs(title = "Alcohol-Impaired Driving Deaths vs American Indian or Alaska Native",
+       x = "American Indian or Alaska Native (%)",
+       y = "Alcohol-Impaired Driving Deaths")
+
+# Alcohol-Impaired Driving Deaths vs Median Household Income
+eda_a |> 
+ggplot(aes(x = median_household_income, y = alcohol_impaired_driving_deaths)) +
+  geom_point() +
+  geom_smooth(method = "lm", col = "blue") +
+  theme_minimal() +
+  labs(title = "Alcohol-Impaired Driving Deaths vs Median Household Income",
+       x = "Median Household Income ($)",
+       y = "Alcohol-Impaired Driving Deaths")
+
+# Alcohol-Impaired Driving Deaths vs Hispanic
+eda_a |> 
+ggplot(aes(x = hispanic, y = alcohol_impaired_driving_deaths)) +
+  geom_point() +
+  geom_smooth(method = "lm", col = "blue") +
+  theme_minimal() +
+  labs(title = "Alcohol-Impaired Driving Deaths vs Hispanic",
+       x = "Hispanic (%)",
+       y = "Alcohol-Impaired Driving Deaths")
+
+# Alcohol-Impaired Driving Deaths vs Female
+eda_a |> 
+ggplot(aes(x = female, y = alcohol_impaired_driving_deaths)) +
+  geom_point() +
+  geom_smooth(method = "lm", col = "blue") +
+  theme_minimal() +
+  labs(title = "Alcohol-Impaired Driving Deaths vs Female",
+       x = "Female (%)",
+       y = "Alcohol-Impaired Driving Deaths")
+```
+
+
+```{r}
+stuff_to_know <- eda_a[c("female",
+                         "median_household_income", 
+                         "unemployment")]
+```
+
+
+```{r}
+# Filter out zero values for better visualization
+eda_a_filtered <- eda_a |>  filter(american_indian_or_alaska_native > .1)
+
+# Create a scatter plot with a linear regression line
+eda_a_filtered |> 
+  ggplot(aes(x = american_indian_or_alaska_native, y = alcohol_impaired_driving_deaths)) +
+  geom_point(aes(color = x65_and_older)) +
+  geom_smooth(method = "lm") +
+  scale_color_gradient(low = "blue", high = "red") +
+  labs(title = "Alcohol-Impaired Driving Deaths vs American Indian or Alaska Native",
+       x = "American Indian or Alaska Native (%)",
+       y = "Alcohol-Impaired Driving Deaths",
+       color = "Age 65 and Older (%)") +
+  theme_bw(base_size = 14)
+```
+
+
+```{r}
+eda_a |> 
+  ggplot(aes(x = x65_and_older, y = alcohol_impaired_driving_deaths)) +
+  geom_point(aes(color = american_indian_or_alaska_native)) +
+  geom_smooth(method = "lm") +
+  scale_color_gradient(low = "blue", high = "red") +
+  labs(title = "Alcohol-Impaired Driving Deaths vs age 65 and Older",
+       x = "Age 65 and Older (%)",
+       y = "Alcohol-Impaired Driving Deaths",
+       color = "American Native (%)") +
+  theme_bw(base_size = 14)
+```
+
+
+```{r}
+eda_a |> 
+  ggplot(aes(x = unemployment, y = alcohol_impaired_driving_deaths)) +
+  geom_point(aes(color = x65_and_older)) +
+  geom_smooth(method = "lm") +
+  scale_color_gradient(low = "blue", high = "red") +
+  labs(title = "Alcohol-Impaired Driving Deaths vs Unemployment",
+       x = "Unemployment Rate (%)",
+       y = "Alcohol-Impaired Driving Deaths",
+       color = "Age 65 and Older (%)") +
+  theme_bw(base_size = 14)
+```
+
+
+```{r}
+eda_a |> 
+  ggplot(aes(x = x65_and_older, y = alcohol_impaired_driving_deaths)) +
+  geom_point(aes(color = unemployment)) +
+  geom_smooth(method = "lm") +
+  scale_color_gradient(low = "blue", high = "red") +
+  labs(title = "Alcohol-Impaired Driving Deaths vs Unemployment",
+       x = "Age 65 and Older (%)",
+       y = "Alcohol-Impaired Driving Deaths",
+       color = "Unemployment Rate (%)") +
+  theme_bw(base_size = 14)
+```
+
