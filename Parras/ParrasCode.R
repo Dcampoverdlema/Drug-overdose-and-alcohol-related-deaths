@@ -191,12 +191,30 @@ west_virginia_merged <- west_virginia_counties %>%
 
 ggplot(data = west_virginia_merged, aes(x = long, y = lat, group = group)) +
   geom_polygon(aes(fill=drug_overdose_deaths_raw_value),color = "white") +
-  scale_fill_viridis_c(option = "plasma", na.value = "black") +
+  scale_fill_viridis_c(option = "plasma", na.value = "lightgrey") +
   coord_fixed(1.3) +
   theme(axis.title= element_blank(), 
         axis.text=element_blank()) +
   labs(title= "Drug Overdose Deaths by County", 
        fill="Number of Deaths")
+
+ggplot(data = west_virginia_merged, aes(x = long, y = lat, group = group)) +
+  geom_polygon(aes(fill=median_household_income_raw_value),color = "white") +
+  scale_fill_viridis_c(option = "plasma", na.value = "lightgrey") +
+  coord_fixed(1.3) +
+  theme(axis.title= element_blank(), 
+        axis.text=element_blank()) +
+  labs(title= "Median Income by County ", 
+       fill="Median Income ")
+
+west_virginia_data |>  
+  ggplot(aes(x=median_household_income_raw_value, y=drug_overdose_deaths_raw_value))+
+  geom_point() +
+  geom_smooth(method = "lm", linewidth = 2, color="red") +
+  labs( title="Drug Overdose and Median Income",
+    y = "Drug Overdose Deaths", x="Median Household Income")
+
+
 
 
 # correlation  -----------------------------------------------------------------
