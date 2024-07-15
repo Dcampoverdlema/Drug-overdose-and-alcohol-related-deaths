@@ -16,7 +16,7 @@ health_tt <- health_tt |>
 
 
 ```{r}
-health_tt <- kNN(health_tt, k = 5, imp_var = FALSE)
+
 
 
 set.seed(101)
@@ -49,6 +49,8 @@ get_test_pred <- function(k) {
 
 
 ```{r}
+health_tt <- kNN(health_tt, k = 5, imp_var = FALSE)
+
 test_pred_all <- map(1:k, get_test_pred) |> 
   bind_rows()
 ```
