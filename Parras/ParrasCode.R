@@ -191,21 +191,23 @@ west_virginia_merged <- west_virginia_counties %>%
 
 ggplot(data = west_virginia_merged, aes(x = long, y = lat, group = group)) +
   geom_polygon(aes(fill=drug_overdose_deaths_raw_value),color = "white") +
-  scale_fill_viridis_c(option = "plasma", na.value = "lightgrey") +
+  scale_fill_gradient(low = "blue", high = "red", na.value = "grey50") +
   coord_fixed(1.3) +
   theme(axis.title= element_blank(), 
         axis.text=element_blank()) +
   labs(title= "Drug Overdose Deaths by County", 
-       fill="Number of Deaths")
+       fill="Number of Deaths") + 
+  theme_minimal()
 
 ggplot(data = west_virginia_merged, aes(x = long, y = lat, group = group)) +
   geom_polygon(aes(fill=median_household_income_raw_value),color = "white") +
-  scale_fill_viridis_c(option = "plasma", na.value = "lightgrey") +
+  scale_fill_gradient(low = "red", high = "blue", na.value = "grey50") +
   coord_fixed(1.3) +
   theme(axis.title= element_blank(), 
         axis.text=element_blank()) +
   labs(title= "Median Income by County ", 
-       fill="Median Income ")
+       fill="Median Income ") + 
+  theme_minimal()
 
 west_virginia_data |>  
   ggplot(aes(x=median_household_income_raw_value, y=drug_overdose_deaths_raw_value))+
@@ -293,6 +295,48 @@ health_data_new %>%
   ggplot(aes(x=unemployment, y=drug_overdose_deaths)) +
   geom_point(color="blue",size=3,alpha=0.5) +
   theme_light()
+
+
+# jodie eda --------------------------------------------------------------------------
+
+selected_data$`Income level` <- cut(selected_data$median_household_income_raw_value,
+                                    breaks = c(-Inf, 52610, 60986, 70897, Inf),
+                                    labels = c("Low", "Lower-Middle", "Upper-Middle", "High"),
+                                    right = TRUE, na.rm=TRUE)
+
+health_data_new$`Income level` <- cut(selected_data$median_household_income_raw_value,
+                                      breaks = c(-Inf, 52610, 60986, 70897, Inf),
+                                      labels = c("Low", "Lower-Middle", "Upper-Middle", "High"),
+                                      right = TRUE, na.rm=TRUE)
+
+ggplot(selected_data, aes(x = adult_smoking_raw_value, y = drug_overdose_deaths_raw_value)) +
+  geom_point(size = 2, alpha = 0.7, aes(color = `Income level`)) +
+  geom_smooth(method = 'lm', se = TRUE, color="black") +
+  theme_minimal() +
+  scale_x_continuous(labels=scales::percent_format()) +
+  labs(title = "Smoking Rate Relationship With Drug Overdose",
+       x = 'Adult Smoking Rate',
+       y = 'Drug Overdose Deaths per 100,000 population') +
+  scale_color_manual(values = c("Low" = "darkred", "Lower-Middle" = "red", "Upper-Middle" = "blue", "High" = "darkblue")) 
+
+
+ggplot(health_data_new, aes(x = excessive_drinking_raw_value, y = alcohol_impaired_driving_deaths_raw_value)) +
+  geom_point(size = 2, alpha = 0.5, aes(color = `Income level`)) +
+  geom_smooth(method = 'lm', se = TRUE) +
+  scale_y_continuous(labels=scales::percent_format()) +
+  scale_x_continuous(labels=scales::percent_format()) +
+  facet_wrap(~population_density, scales = "free_y", ncol = 2) +
+  labs(title = "*Counties with higher median income have higher proportion of adults that excessively drink",
+       x = '% of adults that excessively drink',
+       y = '% of driving deaths with alcohol involvement') +
+  scale_color_manual(values = c("Low" = "yellow", "Lower-Middle" = "lightskyblue2", "Upper-Middle"= "orange", "High" = "darkblue")) 
+
+
+
+
+
+
+
 
 
 
