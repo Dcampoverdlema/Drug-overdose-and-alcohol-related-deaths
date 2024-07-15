@@ -2,20 +2,29 @@
 # Load necessary libraries
 library(tidyverse)
 library(caret)
+library(VIM)
 
-health_apval <- read_csv("../data/final_data.csv")
-health_apval <- health_apval |> 
-  select(-name, -...1) |> 
-  mutate(across(everything(), ~ifelse(is.na(.), mean(., na.rm = TRUE), .)))
+health_dpval <- read_csv("../data/final_data.csv")
+health_dpval <- health_dpval |> 
+  select(-name, -...1, -population, -alcohol_impaired_driving_deaths) |> 
+  filter(!is.na(drug_overdose_deaths))
 
 str(health_apval)
 ```
+
+```{r}
+health_dpval <- kNN(health_dpval, k = 5, imp_var = FALSE)
+
+# Check for any remaining missing values
+sum(is.na(health_dpval))
+```
+
 
 
 ```{r}
 
 # Create a formula for the linear model
-model_drug <- lm(drug_overdose_deaths ~ ., data = health_apval)
+model_drug <- lm(drug_overdose_deaths ~ ., data = health_dpval)
 
 summary(model_drug)
 

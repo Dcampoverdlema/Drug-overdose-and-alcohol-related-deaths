@@ -1,6 +1,7 @@
 ```{r}
 library(tidyverse)
 library(glmnet)
+library(VIM)
 ```
 
 
@@ -9,12 +10,15 @@ health_tt <- read_csv("../data/final_data.csv")
 
 
 health_tt <- health_tt |> 
-  select(-name, -...1) |>
-  mutate(across(everything(), ~ifelse(is.na(.), mean(., na.rm = TRUE), .)))
+  select(-name, -...1, -population, -alcohol_impaired_driving_deaths) |> 
+  filter(!is.na(drug_overdose_deaths))
 ```
 
 
 ```{r}
+health_tt <- kNN(health_tt, k = 5, imp_var = FALSE)
+
+
 set.seed(101)
 k <- 5
 health_tt <- health_tt |>

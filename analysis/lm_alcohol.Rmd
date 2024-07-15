@@ -3,7 +3,8 @@
 library(tidyverse)
 library(glmnet)
 library(broom)
-library(ggfortify)  
+library(ggfortify)
+library(VIM)
 
 ```
 
@@ -11,10 +12,16 @@ library(ggfortify)
 health <- read_csv("../data/final_data.csv")
 
 health <- health |> 
-  select(-name, -...1, -population) |> 
-  mutate(across(everything(), ~ifelse(is.na(.), mean(., na.rm = TRUE), .)))
-
+  select(-name, -...1, -population, -drug_overdose_deaths) |> 
+  filter(!is.na(alcohol_impaired_driving_deaths))
 head(health)
+```
+
+```{r}
+health <- kNN(health, k = 5, imp_var = FALSE)
+
+# Check for any remaining missing values
+sum(is.na(health))
 ```
 
 

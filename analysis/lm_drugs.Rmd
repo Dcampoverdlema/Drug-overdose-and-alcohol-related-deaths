@@ -11,10 +11,11 @@ library(ggfortify)
 health <- read_csv("../data/final_data.csv")
 
 health <- health |> 
-  select(-name, -...1, -population) |> 
-  mutate(across(everything(), ~ifelse(is.na(.), mean(., na.rm = TRUE), .)))
+  select(-name, -...1, -population, -alcohol_impaired_driving_deaths) |> 
+  filter(!is.na(drug_overdose_deaths))
 
-head(health)
+health <- kNN(health, k = 5, imp_var = FALSE)
+
 
 response <- health$drug_overdose_deaths
 predictors <- as.matrix(health |>  select(-drug_overdose_deaths))
