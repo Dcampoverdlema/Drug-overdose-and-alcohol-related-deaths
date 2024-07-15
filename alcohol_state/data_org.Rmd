@@ -1,0 +1,59 @@
+```{r}
+library(tidyverse)
+library(janitor)
+```
+
+
+```{r}
+health_data <- read.csv("../data/analytic_data2024.csv") |> 
+  clean_names()
+
+str(health_data)
+```
+
+
+```{r}
+state_mt <- health_data |> 
+  filter(state_abbreviation =="MT", county_fips_code == "000")|> 
+  select(
+    contains("raw_value")) |> 
+  mutate_all(as.numeric)
+
+state_in <- health_data |> 
+  filter(state_abbreviation =="IN", county_fips_code == "000")|> 
+  select(
+    contains("raw_value")) |> 
+  mutate_all(as.numeric)
+
+View(state_mt)
+View(state_in)
+```
+
+
+
+```{r}
+state_data_mt <- health_data |> 
+  filter(state_abbreviation == "MT") |> 
+  select(
+    contains("raw_value")) |> 
+  mutate_all(as.numeric)
+
+state_data_in <- health_data |> 
+  filter(state_abbreviation == "IN") |> 
+  select(
+    contains("raw_value")) |> 
+  mutate_all(as.numeric)
+
+str(state_data_mt)
+str(state_data_in)
+```
+
+
+
+```{r}
+write.csv(state_data_h, "../data/MT_count_data.csv")
+write.csv(state_data_l, "../data/IN_count_data.csv")
+write.csv(state_mt, "../data/MT_data.csv")
+write.csv(state_in, "../data/IN_data.csv")
+```
+

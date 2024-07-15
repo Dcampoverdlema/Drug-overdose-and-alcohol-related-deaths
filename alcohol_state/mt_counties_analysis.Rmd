@@ -1,0 +1,177 @@
+```{r}
+library(tidyverse)
+library(caret)
+library(glmnet)
+library(randomForest)
+library(rpart)
+library(rpart.plot)
+library(corrplot)
+library(VIM)
+
+
+```
+
+```{r}
+# Load the datasets
+MT_count_data <- read.csv('../data/MT_count_data.csv') |> 
+  select(high_school_completion_raw_value,
+         some_college_raw_value,
+         unemployment_raw_value,
+         children_in_poverty_raw_value,
+         income_inequality_raw_value,
+         children_in_single_parent_households_raw_value,
+         social_associations_raw_value,
+         disconnected_youth_raw_value,
+         alcohol_impaired_driving_deaths_raw_value,
+         population_raw_value,
+         x_below_18_years_of_age_raw_value,
+         x_65_and_older_raw_value,
+         x_non_hispanic_black_raw_value,
+         x_american_indian_or_alaska_native_raw_value,
+         x_asian_raw_value,
+         x_native_hawaiian_or_other_pacific_islander_raw_value,
+         x_hispanic_raw_value,
+         x_non_hispanic_white_raw_value,
+         x_not_proficient_in_english_raw_value,
+         x_female_raw_value,
+         x_rural_raw_value)
+
+
+str(MT_count_data)
+```
+
+```{r}
+# Impute missing values using KNN
+MT_count_data <- kNN(MT_count_data, k = 5, imp_var = FALSE)
+
+# Check for any remaining missing values
+sum(is.na(MT_count_data))
+
+
+```
+
+
+```{r}
+# Summary statistics
+summary(MT_count_data)
+
+```
+
+
+```{r}
+# Correlation matrix
+cor_matrix <- cor(MT_count_data)
+corrplot::corrplot(cor_matrix, method = 'circle')
+
+```
+
+
+```{r}
+# Visualizations
+MT_count_data |> 
+  filter(alcohol_impaired_driving_deaths_raw_value !=0) |> 
+  ggplot(aes(x = social_associations_raw_value, y = alcohol_impaired_driving_deaths_raw_value)) +
+  geom_point() +
+  geom_smooth(method = 'lm', se = FALSE)
+
+MT_count_data |> 
+  filter(alcohol_impaired_driving_deaths_raw_value !=0) |> 
+  ggplot(aes(x = high_school_completion_raw_value, y = alcohol_impaired_driving_deaths_raw_value)) +
+  geom_point() +
+  geom_smooth(method = 'lm', se = FALSE)
+
+MT_count_data |> 
+  filter(alcohol_impaired_driving_deaths_raw_value !=0) |> 
+  ggplot(aes(x = x_american_indian_or_alaska_native_raw_value, y = alcohol_impaired_driving_deaths_raw_value)) +
+  geom_point() +
+  geom_smooth(method = 'lm', se = FALSE)
+
+MT_count_data |> 
+  filter(alcohol_impaired_driving_deaths_raw_value !=0) |> 
+  ggplot(aes(x = x_non_hispanic_white_raw_value, y = alcohol_impaired_driving_deaths_raw_value)) +
+  geom_point() +
+  geom_smooth(method = 'lm', se = FALSE)
+
+# Add more visualizations as needed
+
+```
+
+
+```{r}
+set.seed(123)
+train_control <- trainControl(method = "cv", number = 5)
+
+models <- c("lm", "ridge", "lasso", "enet")
+
+results <- list()
+
+for (model in models) {
+  if (model == "ridge" || model == "lasso" || model == "enet") {
+    alpha <- switch(model,
+                    "ridge" = 0,
+                    "lasso" = 1,
+                    "enet" = 0.5)
+    fit <- train(alcohol_impaired_driving_deaths_raw_value ~ ., data = MT_count_data,
+                 method = "glmnet",
+                 trControl = train_control,
+                 tuneGrid = expand.grid(alpha = alpha, lambda = seq(0.0001, 1, length = 100)))
+  } else {
+    fit <- train(alcohol_impaired_driving_deaths_raw_value ~ ., data = MT_count_data,
+                 method = model,
+                 trControl = train_control)
+  }
+  results[[model]] <- fit
+}
+
+resamples(results) |>  summary(metric = "RMSE")
+
+```
+
+
+```{r}
+# Select the best model based on RMSE
+best_model <- results[[which.min(sapply(results, function(x) min(x$results$RMSE)))]]
+
+# Evaluate the best model
+summary(best_model)
+
+# Extract significant predictors (p-values for linear model)
+if ("lm" %in% class(best_model$finalModel)) {
+  summary(best_model$finalModel)$coefficients
+}
+
+# Visualize feature importance
+varImp(best_model)
+
+```
+
+
+```{r}
+# Train decision tree model
+tree_model <- rpart(alcohol_impaired_driving_deaths_raw_value ~ ., data = MT_count_data, method = "anova")
+rpart.plot(tree_model)
+
+# Evaluate decision tree model
+printcp(tree_model)
+
+```
+
+
+```{r}
+# Train random forest model
+rf_model <- randomForest(alcohol_impaired_driving_deaths_raw_value ~ ., data = MT_count_data, importance = TRUE)
+print(rf_model)
+
+# Evaluate random forest model
+importance(rf_model)
+varImpPlot(rf_model)
+
+```
+
+
+```{r}
+# Summarize findings
+summary(results)
+
+```
+
