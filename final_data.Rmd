@@ -50,7 +50,7 @@ health_data <- health_data |>
     
  # )
 health_data <- health_data |> 
-  select(name, alcohol_impaired_driving_deaths_raw_value, high_school_graduation_raw_value, unemployment_raw_value, median_household_income_raw_value, children_in_single_parent_households_raw_value, social_associations_raw_value, drug_overdose_deaths_raw_value, disconnected_youth_raw_value, homicides_raw_value, suicides_raw_value, population_raw_value, population_density, x_below_18_years_of_age_raw_value, x_65_and_older_raw_value, x_non_hispanic_black_raw_value, x_american_indian_or_alaska_native_raw_value, x_hispanic_raw_value, x_female_raw_value)
+  select(name, alcohol_impaired_driving_deaths_raw_value, high_school_graduation_raw_value, unemployment_raw_value, median_household_income_raw_value, children_in_single_parent_households_raw_value, social_associations_raw_value, drug_overdose_deaths_raw_value, disconnected_youth_raw_value, homicides_raw_value, suicides_raw_value, population_raw_value, population_density, x_below_18_years_of_age_raw_value, x_65_and_older_raw_value, x_non_hispanic_black_raw_value, x_american_indian_or_alaska_native_raw_value, x_hispanic_raw_value, x_female_raw_value, excessive_drinking_raw_value, adult_smoking_raw_value)
 
 ```
 
