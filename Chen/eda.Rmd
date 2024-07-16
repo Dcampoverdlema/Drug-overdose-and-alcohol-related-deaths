@@ -836,4 +836,12 @@ ggplot(health, aes(x = disconnected_youth, y = alcohol_impaired_driving_deaths))
 health2 <- health |> select(-population)
 lm(alcohol_impaired_driving_deaths~log(high_school_graduation) + log(population_density) + log(american_indian_or_alaska_native) + log(suicides) )
 ```
-Model diagnostics are not good
+
+## Mixed effects
+## plotting pairswise plot to see what transformations to use (go back on this)
+
+```{r}
+library("lme4")
+# mixed linear models
+# random intercept--
+```
