@@ -1,11 +1,10 @@
 ```{r}
-# Load necessary libraries
 library(tidyverse)
 library(glmnet)
 library(broom)
 library(ggfortify)
 library(VIM)
-
+library(cv)
 ```
 
 ```{r}
@@ -13,6 +12,7 @@ health <- read_csv("../data/final_data.csv")
 
 health <- health |> 
   select(-name, -...1, -population, -drug_overdose_deaths, -homicides, -adult_smoking) 
+
 
 health |>  summarise(across(everything(), ~ sum(is.na(.))))
 
@@ -54,6 +54,7 @@ qqplot model diagnostic
 
 ```{r}
 health_lm <- lm(alcohol_impaired_driving_deaths ~ ., data = health)
+cv(health_lm)
 
 health_lm |> 
   tidy() |> 

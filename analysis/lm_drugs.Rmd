@@ -3,7 +3,8 @@
 library(tidyverse)
 library(glmnet)
 library(broom)
-library(ggfortify)  
+library(ggfortify)
+library(cv)
 ```
 
 ```{r}
@@ -45,7 +46,7 @@ print(coef(final_model))
 ```{r}
 health_lm <- lm(drug_overdose_deaths ~ ., data = health)
 
-summary(health_lm)
+cv(health_lm)
 
 health_lm |> 
   tidy() |> 
