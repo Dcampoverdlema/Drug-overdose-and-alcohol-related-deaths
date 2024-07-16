@@ -443,17 +443,15 @@ ggplot(selected_data, aes(x = adult_smoking_raw_value, y = drug_overdose_deaths_
 
 # Discussion
 
-  From the models, it was found that unemployment is a top predictor for both drug overdose deaths and alcohol-impaired driving deaths. So if unemployment increases, alcohol and drug consumption would most likely increase as well. 
+From the models, it was found that unemployment is a top predictor for both drug overdose deaths and alcohol-impaired driving deaths. So if unemployment increases, alcohol and drug consumption would most likely increase as well. 
   
-> A risk factor for substance abuse and drug use disorders is unemployment. According to research, losing one's job and money can cause psychological stress. This  can then deteriorate one's health and cause temporary coping mechanisms like substance abuse. Specifically, research indicates that losing one's job is linked to an increased risk of alcohol-related health issues and the use of illegal drugs. 
-> Research indicates that substance abuse problems are associated with an increased chance of unemployment because those who struggle with their use are more likely to take sick days and work less productively, both of which can lead to job loss. Studies reveal that addiction also increases the difficulty of getting hired again or finding a new job.
+A risk factor for substance abuse and drug use disorders is unemployment. According to research, losing one's job and money can cause psychological stress. This  can then deteriorate one's health and cause temporary coping mechanisms like substance abuse. Specifically, research indicates that losing one's job is linked to an increased risk of alcohol-related health issues and the use of illegal drugs. 
+
+Research indicates that substance abuse problems are associated with an increased chance of unemployment because those who struggle with their use are more likely to take sick days and work less productively, both of which can lead to job loss. Studies reveal that addiction also increases the difficulty of getting hired again or finding a new job.
 
 ## Ways to Reduce Unemployment
 
 **Career pathways programs:** Programs for career pathways provide low-skilled people with occupation-specific training for higher-skilled roles in rapidly expanding industries including information technology, advanced manufacturing, and health care. These programs integrate social services with academic and technical education; many also include work experience. 
-
-
-
 
 
 # Conclusion 
