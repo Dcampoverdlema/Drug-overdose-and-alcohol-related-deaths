@@ -1,0 +1,26 @@
+```{r}
+library(tidyverse)
+library(rpart)
+library(rpart.plot)
+
+```
+
+
+```{r}
+health_a <- read_csv("../data/final_data.csv")
+
+health_a <- health_a |> 
+  select(-name, -...1, -population, -drug_overdose_deaths, -adult_smoking) |> 
+  filter(!is.na(alcohol_impaired_driving_deaths))
+```
+
+
+```{r}
+# Train decision tree model
+tree_model <- rpart(alcohol_impaired_driving_deaths ~ ., data = health_a, method = "anova")
+rpart.plot(tree_model)
+
+# Evaluate decision tree model
+printcp(tree_model)
+```
+
