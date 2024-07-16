@@ -19,20 +19,20 @@ execute:
 
 # Introduction
 
-Use of drugs and alcohol has substantial financial consequences. Every year, excessive alcohol use costs 249 billion dollars in lost productivity, medical expenditures, and criminal justice costs. In contrast, illicit drug usage costs 193 billion dollars in lost productivity, criminality, and medical costs.Communities can benefit from adopting and putting into practice policies that lessen prescription drug abuse and excessive alcohol consumption.
+  In 2022, 46.8 million Americans who were twelve years of age or older struggled with a drug use disorder.  Eight million Americans aged twelve and older battled alcohol and drug use issues at the same time that year. 
 
-Source: https://www.countyhealthrankings.org/health-data/health-factors/health-behaviors/alcohol-and-drug-use
+  Use of drugs and alcohol has substantial financial consequences. Every year, excessive alcohol use costs 249 billion dollars in lost productivity, medical expenditures, and criminal justice costs. In contrast, illicit drug usage costs 193 billion dollars in lost productivity, criminality, and medical costs. Communities can benefit from adopting and putting into practice policies that lessen prescription drug abuse and excessive alcohol consumption.
 
 
-# Our Question
+## Our Question
 
 **Are there demographic and social factors that are predictors of drug overdose and alcohol-related incidents (e.g., driving accidents)?**
 
 # Data
 
-The data is collected by the University of Wisconsin Population Health Institute. It assigns a ranking based on health outcomes and health factors to each county in every state. There was originally 770 variables in the data set.Since the data set is so big, we decided that we should create another data set with only the variables we want to look at with relation to drug overdose deaths and alcohol impaired driving deaths. Predictor variables are drug overdose deaths and alcohol impaired driving deaths.
+The data is collected by the University of Wisconsin Population Health Institute. It assigns a ranking based on health outcomes and health factors to each county in every state. There were originally 770 variables in the data set. Since the data set is so big, another data set was created with only the variables related to drug overdose deaths and alcohol-impaired driving deaths. Predictor variables are drug overdose deaths and alcohol-impaired driving deaths.
 
-Here are some of the  predictor variables we picked and the reason that we picked them:
+Here are some of the predictor variables picked and the reason for selecting them:
 
 **Unemployment:** Compared to the employed population, the unemployed population has worse health and higher death rates. 
 
@@ -67,24 +67,23 @@ library(class)
 health_data_alc <- read_csv("data/final_data.csv")
 
 health_data_alc <- health_data_alc |> 
-  select(-name, -...1, -population, -drug_overdose_deaths) |> 
+  select(-name, -...1, -population, -drug_overdose_deaths,-homicides) |> 
   filter(!is.na(alcohol_impaired_driving_deaths))
  
-health_data_alc <- kNN(health_data_alc, k = 5, imp_var = FALSE)
-  
+health_data_alc <- na.omit(health_data_alc)
+
 
 health_data_drug <- read_csv("data/final_data.csv")
 
 health_data_drug <- health_data_drug |> 
-  select(-name, -...1, -population, -alcohol_impaired_driving_deaths) |> 
+  select(-name, -...1, -population, -alcohol_impaired_driving_deaths,-homicides) |> 
   filter(!is.na(drug_overdose_deaths))
 
-health_data_drug <- kNN(health_data_drug, k = 5, imp_var = FALSE)
-
+health_data_drug <- na.omit(health_data_drug)
 
 ```
  
-Upon inspection, we found that the variable of drug overdose deaths had lots of N/A values and we want to make sure this is clean as this is one of the main variables we want to look at. Also rename the data so that it can be read easier and look presentbale for any visuals. 
+Upon inspection, the variable of drug overdose deaths was found to have many N/A values, and it is important to ensure this variable is clean as it is one of the main variables to be analyzed. Additionally, rename the data so that it can be read easier and look presentable for any visuals. 
 
 ```{r, include=FALSE} 
 
@@ -92,7 +91,7 @@ Upon inspection, we found that the variable of drug overdose deaths had lots of 
 
 # Intial EDA 
 
-Looking at the states with respect to drug overdose deaths and alcohol impaired driving deaths. As a result, we can identify the areas with the most issues and, eventually, come up with solutions. 
+Looking at the states with respect to drug overdose deaths and alcohol-impaired driving deaths, the areas with the most issues can be identified, and solutions can eventually be developed.
 
 ```{r, include=FALSE} 
 health_data <- read.csv("data/analytic_data2024.csv") %>%  
@@ -173,10 +172,9 @@ ggplot(data = merged_data, aes(x = long, y = lat, group = group)) +
     axis.title = element_blank(),
     axis.text = element_blank(),
     axis.ticks = element_blank(),  
-    plot.title = element_text(hjust = 0.5, face = "bold", size = 15),  # Center, bold the title, and increase font size
-    plot.subtitle = element_text(hjust = 0.5, face = "plain", size = 8),  # Center the subtitle, normal weight, and reduce font size
-    plot.caption = element_text(face = "italic", size = 6, hjust = 0)  # Italicize, reduce font size of the caption, and left-align
-  ) +
+    plot.title = element_text(hjust = 0.5, face = "bold", size = 15),  
+    plot.subtitle = element_text(hjust = 0.5, face = "plain", size = 8),  
+    plot.caption = element_text(face = "italic", size = 6, hjust = 0))+
   labs(
     title = "Alcohol Impaired Driving Deaths by State",
     subtitle = "Data source: County Health Rankings & Roadmaps (https://www.countyhealthrankings.org/)",
@@ -187,13 +185,16 @@ ggplot(data = merged_data, aes(x = long, y = lat, group = group)) +
 
 ```
 
-Just by observation, you can see that West Virginia has the highest amount of drug overdose deaths. And Montana has the most alcohol impaired driving deaths. By the predictors of both drug overdose deaths and alcohol impaired driving deaths, we can hopefully come up with some solutions and or regulations to potentially help these states with their ongoing problems. 
+West Virginia has the highest amount of drug overdose deaths. By conducting further research on West Virginia, it was found that the state leads the nation in opioid-related drug overdose deaths. According to the Drug Enforcement Administration, West Virginia has one of the highest prescription rates for opioids in the country and also has a high prevalence of controlled prescription drug addiction and trafficking. Furthermore, the usage of illegal prescription drugs was a factor in almost 61% of state overdose deaths in 2015.
+
+For alcohol-impaired driving deaths, Montana had the highest amount of deaths resulting from alcohol-impaired driving. According to Forbes, Montana has the highest rate of drunk driving, with 8.57 fatal crashes involving drunk drivers for every 100,000 licensed drivers and 7.14 fatal crashes involving drunk drivers for every 100,000 state population. These rates are the highest in the country. Montana has the highest percentage of drunk drivers in the country—more than two-fifths (43.51%) of road fatalities.
+
+By analyzing the predictors of both drug overdose deaths and alcohol-impaired driving deaths, solutions and regulations can hopefully be developed to help these states with their ongoing problems. 
 
 
-## Regression 
+# Modeling
 
-So to eventually uncover the predictors, we need to conduct a regression analysis. This can assist us in deciding which variables should be taken into consideration and which ones not.
-But first we should find the best regression model for our data. This can help us get more accurate results. 
+To eventually uncover the predictors, the first step is to conduct a regression analysis. This can assist in deciding which variables should be taken into consideration and which ones not. First, finding the best regression model for the data is essential, as this can help achieve more accurate results.
 
 
 **Test and Train to find the best model for our data** 
@@ -255,7 +256,8 @@ test_pred_all |>
                color = "red", size = 4) + 
   stat_summary(fun.data = mean_se, geom = "errorbar", 
                color = "red", width = 0.2) + 
-  labs(title="Test and Train: Drug Overdose Deaths") +
+  labs(title="Test and Train: Drug Overdose Deaths", 
+       y = 'Root Mean Squared Error') +
   theme(
     axis.title = element_text(size = 14),
     axis.text.y = element_text(size = 14, ),
@@ -264,10 +266,6 @@ test_pred_all |>
   ) +
   scale_x_discrete(labels=c("enet_pred"="Elastic","lasso_pred"="Lasso","lm_pred"="Linear","ridge_pred"="Ridge"))
 ```
-**We should use a linear model for alcohol since there is no intersection with the other models**
-
-Now looking alcohol impaired deaths: 
- 
 ```{r}
 
 set.seed(101)
@@ -318,7 +316,8 @@ test_pred_all |>
   stat_summary(fun.data = mean_se, geom = "errorbar", 
                color = "red", width = 0.2) + 
   theme_bw() +
-  labs( title="Test and Train: Alcohol Impaired Driving Deaths") +
+  labs( title="Test and Train: Alcohol Impaired Driving Deaths", 
+         y = 'Root Mean Squared Error') +
   theme(
     axis.title = element_text(size = 14),
     axis.text.y = element_text(size = 14, ),
@@ -328,15 +327,16 @@ test_pred_all |>
   scale_x_discrete(labels=c("enet_pred"="Elastic","lasso_pred"="Lasso","lm_pred"="Linear","ridge_pred"="Ridge"))
 
 ```
-**All of the models intersect so there isn't a "best" model to work with it so we will use linear model since that is what we are using for alcohol** 
+**All of the models intersect, so there isn't a "best" model to work with. Therefore, a linear model will be used, as it is already being used for alcohol.**
 
 ```{r}
 
 ```
 
-**Linear Model**
+# Results
 
-First lets look at alcohol impaired driving deaths 
+Looking at Alcohol Impaired Driving Deaths: 
+
 ```{r}
 
 alcohol_lm <- lm(alcohol_impaired_driving_deaths ~ . , data=health_data_alc)
@@ -372,9 +372,7 @@ alcohol_lm |>
   )
 
 ```
-The substantial positive coefficients of variables such as "X65 and older," "Unemployment," "American Indian or Alaska native," and "Median household income" indicate that these characteristics are linked to a rise in the number of alcohol-impaired driving deaths.
-
-Variables such as "Hispanic" and "Female" have noteworthy negative coefficients, indicating that these attributes are linked to a reduction in deaths resulting from alcohol-impaired driving.
+Unemployment is the top predictor for alcohol impaired driving deaths. Then if everything is constant, when unemployment increases by 1, then alcohol impaired driving deaths will increase by the coefficient. Other significant predictors are Excessive Drinking, Suicides, and Population Density.  
 
 
 Now onto drug overdose deaths: 
@@ -408,14 +406,12 @@ drug_lm |>
   theme(
     axis.title = element_text(size = 15),
     axis.text = element_text(size = 15, ),
-    plot.title = element_text(size = 14)
+    plot.title = element_text(size = 13)
   )
 
 ```
-The significant positive coefficients of variables such as Unemployment, Female, and Children in single parent households indicate that these factors are linked to a rise in drug overdose deaths. 
 
-
-Social/Demographic affect health variables that them affect our response variables 
+The top predictor is Female. The other significant factors are Unemployment, Adult Smoking, Childern in a Single Parent Household, Median Household Income, Non Hispanic Black, American Indian or Alaska Native, and Below 18 Years of Age. 
 
 
 ```{r}
@@ -441,34 +437,25 @@ ggplot(selected_data, aes(x = adult_smoking_raw_value, y = drug_overdose_deaths_
 ```
 ```{r}
 
-#I NEED TO FIX THIS SECTION!!!
 
-selected_data$`Income level` <- cut(selected_data$median_household_income_raw_value,
-                                  breaks = c(-Inf, 52610, 60986, 70897, Inf),
-                                  labels = c("Low", "Lower-Middle", "Upper-Middle", "High"),
-                                  right = TRUE, na.rm=TRUE)
-
-ggplot(selected_data, aes(x = excessive_drinking_raw_value, y = alcohol_impaired_driving_deaths_raw_value)) +
-  geom_point(size = 2, alpha = 0.5, aes(color = `Income level`)) +
-  geom_smooth(method = 'lm', se = TRUE) +
-  scale_y_continuous(labels=scales::percent_format()) +
-  scale_x_continuous(labels=scales::percent_format()) +
-  labs(title = "Counties with higher median income have higher proportion of adults that excessively drink",
-       x = '% of adults that excessively drink',
-       y = '% of driving deaths with alcohol involvement') +
-  scale_color_manual(values = c("Low" = "darkred", "Lower-Middle" = "red", "Upper-Middle"= "blue", "High" = "darkblue")) 
 
 ```
 
+# Discussion
+
+From the models, it was found that unemployment is a top predictor for both drug overdose deaths and alcohol-impaired driving deaths. So if unemployment increases, alcohol and drug consumption would most likely increase as well. 
+  
+A risk factor for substance abuse and drug use disorders is unemployment. According to research, losing one's job and money can cause psychological stress. This  can then deteriorate one's health and cause temporary coping mechanisms like substance abuse. Specifically, research indicates that losing one's job is linked to an increased risk of alcohol-related health issues and the use of illegal drugs. 
+
+Research indicates that substance abuse problems are associated with an increased chance of unemployment because those who struggle with their use are more likely to take sick days and work less productively, both of which can lead to job loss. Studies reveal that addiction also increases the difficulty of getting hired again or finding a new job.
+
+## Ways to Reduce Unemployment
+
+**Career pathways programs:** Programs for career pathways provide low-skilled people with occupation-specific training for higher-skilled roles in rapidly expanding industries including information technology, advanced manufacturing, and health care. These programs integrate social services with academic and technical education; many also include work experience. 
 
 
+# Conclusion 
 
-
-## Conclusion 
-
-So after looking at our data, we really cant conclude about any predictors that are demographic and social. What we think is that there are social and demographic factors that affect health factors that then are predictors of 
-
-
-
+ 
 
 
