@@ -10,17 +10,21 @@ health_tta <- read_csv("../data/final_data.csv")
 
 
 health_tta <- health_tta |> 
-  select(-name, -...1, -population, -drug_overdose_deaths, -adult_smoking) |> 
-  filter(!is.na(alcohol_impaired_driving_deaths))
+    select(-name, -...1, -population, -drug_overdose_deaths, -homicides, -adult_smoking) 
+
+health_tta |>  summarise(across(everything(), ~ sum(is.na(.))))
+
+
+health_tta <- na.omit(health_tta)
 ```
 
 
 ```{r}
 # Impute missing values using KNN
-health_tta <- kNN(health_tta, k = 5, imp_var = FALSE)
+#health_tta <- kNN(health_tta, k = 5, imp_var = FALSE)
 
 # Check for any remaining missing values
-sum(is.na(health_tta))
+#sum(is.na(health_tta))
 
 set.seed(101)
 k <- 5

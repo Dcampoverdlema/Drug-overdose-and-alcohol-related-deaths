@@ -6,17 +6,21 @@ library(VIM)
 
 health_dpval <- read_csv("../data/final_data.csv")
 health_dpval <- health_dpval |> 
-  select(-name, -...1, -population, -alcohol_impaired_driving_deaths) |> 
-  filter(!is.na(drug_overdose_deaths))
+  select(-name, -...1, -population, -alcohol_impaired_driving_deaths, -homicides, -excessive_drinking) 
 
-str(health_apval)
+health_dpval |>  summarise(across(everything(), ~ sum(is.na(.))))
+
+
+health_dpval <- na.omit(health_dpval)
+
+str(health_dpval)
 ```
 
 ```{r}
-health_dpval <- kNN(health_dpval, k = 5, imp_var = FALSE)
+#health_dpval <- kNN(health_dpval, k = 5, imp_var = FALSE)
 
 # Check for any remaining missing values
-sum(is.na(health_dpval))
+#sum(is.na(health_dpval))
 ```
 
 
