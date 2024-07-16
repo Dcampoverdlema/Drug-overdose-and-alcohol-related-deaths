@@ -19,7 +19,7 @@ execute:
 
 # Introduction
 
-Use of drugs and alcohol has substantial financial consequences. Every year, excessive alcohol use costs 249 billion dollars in lost productivity, medical expenditures, and criminal justice costs. In contrast, illicit drug usage costs 193 billion dollars in lost productivity, criminality, and medical costs.Communities can benefit from adopting and putting into practice policies that lessen prescription drug abuse and excessive alcohol consumption.
+  Use of drugs and alcohol has substantial financial consequences. Every year, excessive alcohol use costs 249 billion dollars in lost productivity, medical expenditures, and criminal justice costs. In contrast, illicit drug usage costs 193 billion dollars in lost productivity, criminality, and medical costs. Communities can benefit from adopting and putting into practice policies that lessen prescription drug abuse and excessive alcohol consumption.
 
 Source: https://www.countyhealthrankings.org/health-data/health-factors/health-behaviors/alcohol-and-drug-use
 
@@ -67,20 +67,19 @@ library(class)
 health_data_alc <- read_csv("data/final_data.csv")
 
 health_data_alc <- health_data_alc |> 
-  select(-name, -...1, -population, -drug_overdose_deaths) |> 
+  select(-name, -...1, -population, -drug_overdose_deaths,-homicides) |> 
   filter(!is.na(alcohol_impaired_driving_deaths))
  
-health_data_alc <- kNN(health_data_alc, k = 5, imp_var = FALSE)
-  
+health_data_alc <- na.omit(health_data_alc)
+
 
 health_data_drug <- read_csv("data/final_data.csv")
 
 health_data_drug <- health_data_drug |> 
-  select(-name, -...1, -population, -alcohol_impaired_driving_deaths) |> 
+  select(-name, -...1, -population, -alcohol_impaired_driving_deaths,-homicides) |> 
   filter(!is.na(drug_overdose_deaths))
 
-health_data_drug <- kNN(health_data_drug, k = 5, imp_var = FALSE)
-
+health_data_drug <- na.omit(health_data_drug)
 
 ```
  
@@ -187,10 +186,15 @@ ggplot(data = merged_data, aes(x = long, y = lat, group = group)) +
 
 ```
 
-Just by observation, you can see that West Virginia has the highest amount of drug overdose deaths. And Montana has the most alcohol impaired driving deaths. By the predictors of both drug overdose deaths and alcohol impaired driving deaths, we can hopefully come up with some solutions and or regulations to potentially help these states with their ongoing problems. 
+
+Just by observation, you can see that West Virginia has the highest amount of drug overdose deaths. By conducting further research on West Virginia, we found that in 2023, they led the nation in opioid related drug overdose deaths. According to the Drug Enforcement Administration, West Virginia has one of the highest prescription rates for opioids in the country, and the state also has a high prevalence of controlled prescription drug addiction and trafficking. Furthermore, the usage of illegal prescription drugs was a factor in almost 61% of state overdose deaths in 2015. 
+
+Then for alcohol impaired driving deaths, Montana had the highest amount of deaths that resulted from alcohol impaired driving. 
+
+By the predictors of both drug overdose deaths and alcohol impaired driving deaths, we can hopefully come up with some solutions and or regulations to potentially help these states with their ongoing problems. 
 
 
-## Regression 
+# Regression 
 
 So to eventually uncover the predictors, we need to conduct a regression analysis. This can assist us in deciding which variables should be taken into consideration and which ones not.
 But first we should find the best regression model for our data. This can help us get more accurate results. 
@@ -408,7 +412,7 @@ drug_lm |>
   theme(
     axis.title = element_text(size = 15),
     axis.text = element_text(size = 15, ),
-    plot.title = element_text(size = 14)
+    plot.title = element_text(size = 13)
   )
 
 ```
