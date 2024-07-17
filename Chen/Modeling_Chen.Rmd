@@ -1,0 +1,218 @@
+---
+title: "Mixed_effects_model"
+author: "Jodie"
+date: "2024-07-16"
+output: html_document
+---
+## Create a new col state_income (median) for all counties
+
+```{r}
+library(pdp)
+library(vip)
+library(rpart.plot)
+library(rpart)
+library(caret)
+library(tidyverse)
+library(janitor)
+# just extracting the state median income
+income_state <- read.csv("data/analytic_data2024.csv") |> 
+  slice(-1) |> 
+  clean_names() |> 
+  rename(
+    Drug_Overdose_Deaths = drug_overdose_deaths_raw_value,
+    Alcohol_Impaired_Driving_Deaths = alcohol_impaired_driving_deaths_raw_value,
+    Unemployment_Rate = unemployment_raw_value,
+    Income_Inequality = income_inequality_raw_value,
+    Highschool_Comp_Rate = high_school_completion_raw_value,
+    Adult_Smoking_Rate = adult_smoking_raw_value,
+    Excessive_Drinking_Rate = excessive_drinking_raw_value,
+    Median_House_Income = median_household_income_raw_value,
+    College_Education_Rate = some_college_raw_value,
+    Children_In_Poverty = children_in_poverty_raw_value,
+    Single_Parent_House = children_in_single_parent_households_raw_value,
+    Social_Associations = social_associations_raw_value,
+    Pop_Under_18 = x_below_18_years_of_age_raw_value,
+    Pop_Over_65 = x_65_and_older_raw_value,
+    NH_Black = x_non_hispanic_black_raw_value,
+    American_Or_Alaska_Native = x_american_indian_or_alaska_native_raw_value,
+    Asian_Pop = x_asian_raw_value,
+    Pacific_Islander = x_native_hawaiian_or_other_pacific_islander_raw_value,
+    Hispanic_Pop = x_hispanic_raw_value,
+    NH_White = x_non_hispanic_white_raw_value,
+    English_Profic = x_not_proficient_in_english_raw_value,
+    Female_Pop = x_female_raw_value,
+    Rural_Pop = x_rural_raw_value
+  ) |> as_tibble() |>
+  filter(county_fips_code=="000" & x5_digit_fips_code != "00000") |>
+  select(name, state_abbreviation, Median_House_Income) |>
+  print(n=52)
+  
+# median_household_income_numerator is empty
+
+
+final_data <- read.csv("data/final_data.csv") 
+
+# append state information to health_data
+
+```
+
+## Making Random Rorest Model for Drug Overdose rate and implementing cross fold validation
+## go back on this 
+
+```{r}
+library(tidyverse)
+library(glmnet)
+library(broom)
+library(ggfortify)  
+
+health <- read_csv("data/final_data.csv")
+
+# remove population density--15.36785
+# with population density
+drugs_df <- health |> 
+  select(-name, -...1, -population_density, -population, -alcohol_impaired_driving_deaths, -homicides, -excessive_drinking) 
+
+
+drugs_df |>  summarise(across(everything(), ~ sum(is.na(.))))
+
+
+drugs_df <- na.omit(drugs_df)
+
+response <- drugs_df$drug_overdose_deaths
+predictors <- as.matrix(drugs_df |>  select(-drug_overdose_deaths))
+
+set.seed(123)  # For reproducibility
+# cv_fit <- cv.glmnet(predictors, response, alpha = 1, nfolds = 10)
+# 
+# print(cv_fit)
+# 
+# plot(cv_fit)
+
+# cv(random forest model)
+
+# finetune mtry (num of predictors at each split)
+
+
+train<-drugs_df |>
+  slice_sample(prop=0.5)
+test<-drugs_df|>
+  anti_join(train)
+
+x_train<- train |>
+  select(-drug_overdose_deaths) |>
+  as.matrix()
+
+x_test <- test |>
+  select(-drug_overdose_deaths) |>
+  as.matrix()
+
+library(caret)
+library(tidyverse)
+library(ranger)
+library(randomForest)
+
+rf_tune_grid <- 
+  data.frame(mtry = seq(3, 5, 8), 
+           splitrule = "variance",
+           min.node.size = 5)
+set.seed(123)
+drug_overdose_rf <- train(drug_overdose_deaths ~ ., data = train,
+        method = "ranger", num.trees = 500,
+        trControl = trainControl(method = "cv", number = 10),
+        tuneGrid = rf_tune_grid, importance="impurity")
+
+drug_overdose_rf # gives in sample evaluation 12.08305 (average across all 10 test folds)
+predictions = predict(drug_overdose_rf, newdata=test) # predicted drug overdose deaths for all the counties
+
+
+RMSE_test = sqrt(mean((test$drug_overdose_deaths - predictions)^2)) # out of sample evaluation is 13.46791
+RMSE_test
+
+# limiting 5 to 6 variables
+
+library(vip)
+var_imp<-varImp(drug_overdose_rf)
+plot(var_imp)
+
+require(caret)
+require(randomForest)
+drug_overdose_rf |>
+  vip()
+
+varImp.randomForest(drug_overdose_rf)
+varImplot(drug_overdose_rf)
+
+
+# library(ranger)
+# drug_overdose_rf2 <- ranger(drug_overdose_deaths ~ ., 
+#                             num.trees = 500, importance = "impurity", data = health)
+# drug_overdose_rf2
+# 
+# library(vip)
+# vip(drug_overdose_rf)
+# drug_overdose_rf$
+# varImpPlot(drug_overdose_rf)
+
+```
+
+```{r setup, include=FALSE}
+
+my_csv<-read_csv("data/jodie_data.csv") 
+# mixed effects model
+# drop homicides for later
+
+# create a new col called income_level with 4 levels--low, high, middle, upper middle, lower middle
+# effect of income level changes by state --random slope
+(1 + income | state) # and income could be continuous, making state a random variable 
+
+new_csv<-my_csv |> 
+  left_join(select(income_state, -name), by = "state_abbreviation") |>
+  rename(state_income=Median_House_Income) |>
+  mutate(relative_income = median_household_income/state_income) |>
+  mutate(categ_rel = c)
+
+# use percentiles of relative_income 
+# aggregate by state, and create histogram? 
+
+# View()
+
+# wouldn't worry about this
+
+final_data<-read_csv("data/final_data.csv")
+
+# (1 | state)
+# random intercept for state allows baseline drug overdose deaths to vary by state, to account for state level
+# variability
+# or do we want 
+
+# effect of predictor on response varies by state--> use mixed model
+my_csv |>
+  drop_na(drug_overdose_deaths) |>
+  select(state_abbreviation, drug_overdose_deaths) |>
+  group_by(state_abbreviation) |>
+  mutate(mean_drugover_by_state = mean(drug_overdose_deaths)) |>
+  select(mean_drugover_by_state) |>
+  unique() |>
+  summary()
+  
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
