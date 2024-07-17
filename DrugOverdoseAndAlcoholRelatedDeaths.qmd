@@ -266,6 +266,7 @@ test_pred_all |>
                color = "red", size = 4) + 
   stat_summary(fun.data = mean_se, geom = "errorbar", 
                color = "red", width = 0.2) + 
+  theme_bw() +
   labs(title="Test and Train: Drug Overdose Deaths", 
        y = 'Root Mean Squared Error',
        x = NULL) +
