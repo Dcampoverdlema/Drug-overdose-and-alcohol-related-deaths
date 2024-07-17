@@ -1,5 +1,6 @@
 ```{r}
 library(tidyverse)
+library(randomForest)
 library(glmnet)
 library(VIM)
 ```
@@ -32,20 +33,22 @@ health_tt <- health_tt |>
 
 ```{r}
 get_test_pred <- function(k) {
-  test_data <- health_tt |> filter(test_fold == k)                     # get test and training data
-  train_data <- health_tt |> filter(test_fold != k)
-  test_x <- as.matrix(select(test_data, -drug_overdose_deaths))                       # get test and training matrices
+  test_data <- health_tt |>  filter(test_fold == k)                     # get test and training data
+  train_data <- health_tt |>  filter(test_fold != k)
+  test_x <- as.matrix(select(test_data, -drug_overdose_deaths))            # get test and training matrices
   train_x <- as.matrix(select(train_data, -drug_overdose_deaths))
   
-  lm_fit <- lm(drug_overdose_deaths ~ ., data = train_data)                           # fit models to training data
+  lm_fit <- lm(drug_overdose_deaths ~ ., data = train_data)                  # fit models to training data
   ridge_fit <- cv.glmnet(train_x, train_data$drug_overdose_deaths, alpha = 0)
   lasso_fit <- cv.glmnet(train_x, train_data$drug_overdose_deaths, alpha = 1)
   enet_fit <- cv.glmnet(train_x, train_data$drug_overdose_deaths, alpha = 0.5)
+  rf_fit <- randomForest(drug_overdose_deaths ~ ., data = train_data, importance = TRUE)
   
   tibble(lm_pred = predict(lm_fit, newdata = test_data),              # return test results
          ridge_pred = as.numeric(predict(ridge_fit, newx = test_x)),
          lasso_pred = as.numeric(predict(lasso_fit, newx = test_x)),
          enet_pred = as.numeric(predict(enet_fit, newx = test_x)),
+         rf_pred = predict(rf_fit, newdata = test_data),
          test_actual = test_data$drug_overdose_deaths,
          test_fold = k)
 }
@@ -62,7 +65,7 @@ test_pred_all <- map(1:k, get_test_pred) |>
 
 ```{r}
 test_pred_all |>
-  pivot_longer(lm_pred:enet_pred, 
+  pivot_longer(lm_pred:rf_pred, 
                names_to = "type", 
                values_to = "test_pred") |>
   group_by(type, test_fold) |>

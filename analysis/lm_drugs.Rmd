@@ -1,10 +1,9 @@
 ```{r}
-# Load necessary libraries
 library(tidyverse)
 library(glmnet)
 library(broom)
 library(ggfortify)
-library(cv)
+library(caret)
 ```
 
 ```{r}
@@ -22,32 +21,28 @@ health <- na.omit(health)
 #health <- kNN(health, k = 5, imp_var = FALSE)
 
 
-response <- health$drug_overdose_deaths
-predictors <- as.matrix(health |>  select(-drug_overdose_deaths))
-
-set.seed(123)  # For reproducibility
-cv_fit <- cv.glmnet(predictors, response, alpha = 1, nfolds = 10)
-
-print(cv_fit)
-
-plot(cv_fit)
-
-best_lambda <- cv_fit$lambda.min
-print(paste("Best lambda value: ", best_lambda))
-
-final_model <- glmnet(predictors, response, alpha = 1, lambda = best_lambda)
-
-print(coef(final_model))
-
 
 ```
 
 
 ```{r}
-health_lm <- lm(drug_overdose_deaths ~ ., data = health)
+set.seed(123)
+train <- health |> 
+  slice_sample(prop = 0.5)
 
-cv(health_lm)
+test <- health |> 
+  anti_join(train)
 
+health_lm <- lm(drug_overdose_deaths ~ ., data = train)
+
+train_control <- trainControl(method = "cv", number = 10)
+cv_model <- train(drug_overdose_deaths ~ ., data = train, method = "lm", trControl = train_control)
+
+print(cv_model$results)
+
+```
+
+```{r}
 health_lm |> 
   tidy() |> 
   mutate(
@@ -65,10 +60,9 @@ health_lm |>
   ggplot(aes(x = estimate, y = term, fill = estimate)) +
   geom_vline(xintercept = 0, linetype = "dashed", color = "black") +
   geom_errorbarh(aes(xmin = estimate - std.error, xmax = estimate + std.error), 
-                 height = 0.2, linewidth = 2, color = "red", show.legend = FALSE) +
-  geom_point(aes(color = estimate), size = 1.8, shape = 21, fill = "black", show.legend = FALSE) +
-  labs(y = NULL,
-       x = "Coefficient") +
+                 height = 0.2, linewidth = 1.4, color = "red", show.legend = FALSE) +
+  geom_point(aes(color = estimate), size = 1.5, shape = 21, fill = "black", show.legend = FALSE) +
+  labs(y = NULL) +
   theme_bw()
 ```
 

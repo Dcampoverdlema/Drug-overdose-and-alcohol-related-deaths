@@ -197,15 +197,24 @@ By analyzing the predictors of both drug overdose deaths and alcohol-impaired dr
 To eventually uncover the predictors, the first step is to conduct a regression analysis. This can assist in deciding which variables should be taken into consideration and which ones not. First, finding the best regression model for the data is essential, as this can help achieve more accurate results.
 
 
-**Test and Train to find the best model for our data** 
+**K-Fold Cross-Validation** 
 
-First looking at drug overdose: 
+This is a good way to check that the data is correct: the original data is randomly split into k equal parts. The model is trained with k-1 parts, and one part is set away to test it. This process is done k times, with a new part being tested each time. Finally, the scores from all k tests are added together to get a single estimate of how well the program worked.
+
+**Steps Taken:**
+
+**Preparing the Data:** For cross-validation, we divided the data into five folds. One fold was used as a test set, and the other four folds were used as training sets.
+
+**Training as a Model:** The training data was used to teach the five models how to work with each shape.
+
+**Making Predictions:** Then, to see how well each model worked, we found its Root Mean Squared Error (RMSE). The RMSE numbers for each model were compared across all bends. The RMSE is a standard way to figure out how well a model predicts numeric data; lower RMSE numbers mean the model that has the least amount of error. "Most of the time". 
 
 ```{r}
 
 library(dplyr)
 library(glmnet)
 library(tidyr)
+library(randomForest)
 
 
 set.seed(101)
@@ -214,20 +223,22 @@ health_data_drug <- health_data_drug |>
   mutate(test_fold = sample(rep(1:k, length.out = n())))
 
 get_test_pred <- function(k) {
-  test_data <- health_data_drug |> filter(test_fold == k)                     # get test and training data
-  train_data <- health_data_drug |> filter(test_fold != k)
-  test_x <- as.matrix(select(test_data, -drug_overdose_deaths))                       # get test and training matrices
+  test_data <- health_data_drug |>  filter(test_fold == k)                     # get test and training data
+  train_data <- health_data_drug |>  filter(test_fold != k)
+  test_x <- as.matrix(select(test_data, -drug_overdose_deaths))            # get test and training matrices
   train_x <- as.matrix(select(train_data, -drug_overdose_deaths))
   
-  lm_fit <- lm(drug_overdose_deaths ~ ., data = train_data)                           # fit models to training data
+  lm_fit <- lm(drug_overdose_deaths ~ ., data = train_data)                  # fit models to training data
   ridge_fit <- cv.glmnet(train_x, train_data$drug_overdose_deaths, alpha = 0)
   lasso_fit <- cv.glmnet(train_x, train_data$drug_overdose_deaths, alpha = 1)
   enet_fit <- cv.glmnet(train_x, train_data$drug_overdose_deaths, alpha = 0.5)
+  rf_fit <- randomForest(drug_overdose_deaths ~ ., data = train_data, importance = TRUE)
   
   tibble(lm_pred = predict(lm_fit, newdata = test_data),              # return test results
          ridge_pred = as.numeric(predict(ridge_fit, newx = test_x)),
          lasso_pred = as.numeric(predict(lasso_fit, newx = test_x)),
          enet_pred = as.numeric(predict(enet_fit, newx = test_x)),
+         rf_pred = predict(rf_fit, newdata = test_data),
          test_actual = test_data$drug_overdose_deaths,
          test_fold = k)
 }
@@ -242,7 +253,7 @@ for (i in 1:k) {
 
 
 test_pred_all |>
-  pivot_longer(lm_pred:enet_pred, 
+  pivot_longer(lm_pred:rf_pred, 
                names_to = "type", 
                values_to = "test_pred") |>
   group_by(type, test_fold) |>
@@ -251,21 +262,26 @@ test_pred_all |>
   ) |> 
   ggplot(aes(x = type, y = rmse)) + 
   geom_point(size = 4) +
-  theme_bw() +
   stat_summary(fun = mean, geom = "point", 
                color = "red", size = 4) + 
   stat_summary(fun.data = mean_se, geom = "errorbar", 
                color = "red", width = 0.2) + 
   labs(title="Test and Train: Drug Overdose Deaths", 
-       y = 'Root Mean Squared Error') +
+       y = 'Root Mean Squared Error',
+       x = NULL) +
   theme(
     axis.title = element_text(size = 14),
     axis.text.y = element_text(size = 14, ),
     axis.text.x = element_text(size= 14, ),
     plot.title = element_text(size = 20)
   ) +
-  scale_x_discrete(labels=c("enet_pred"="Elastic","lasso_pred"="Lasso","lm_pred"="Linear","ridge_pred"="Ridge"))
+  scale_x_discrete(labels=c("enet_pred"="Elastic","lasso_pred"="Lasso","lm_pred"="Linear","rf_pred" = "Random Forest", "ridge_pred"="Ridge"))
 ```
+
+Results from the error bar graph, Random Forest model had the lowest RMSE, which meant it was the most accurate to find our predictors
+
+Now we are going to do the same K - cross validation to find best models for alcohol impaired driving deaths.
+
 ```{r}
 
 set.seed(101)
@@ -275,20 +291,22 @@ health_data_alc <- health_data_alc |>
 
 
 get_test_pred <- function(k) {
-  test_data <- health_data_alc |> filter(test_fold == k)                     
-  train_data <- health_data_alc |> filter(test_fold != k)
-  test_x <- as.matrix(select(test_data, -alcohol_impaired_driving_deaths))                     
+  test_data <- health_data_alc |>  filter(test_fold == k)                     # get test and training data
+  train_data <- health_data_alc |>  filter(test_fold != k)
+  test_x <- as.matrix(select(test_data, -alcohol_impaired_driving_deaths))            # get test and training matrices
   train_x <- as.matrix(select(train_data, -alcohol_impaired_driving_deaths))
   
-  lm_fit <- lm(alcohol_impaired_driving_deaths ~ ., data = train_data)                           # fit models to training data
+  lm_fit <- lm(alcohol_impaired_driving_deaths ~ ., data = train_data)                  # fit models to training data
   ridge_fit <- cv.glmnet(train_x, train_data$alcohol_impaired_driving_deaths, alpha = 0)
   lasso_fit <- cv.glmnet(train_x, train_data$alcohol_impaired_driving_deaths, alpha = 1)
   enet_fit <- cv.glmnet(train_x, train_data$alcohol_impaired_driving_deaths, alpha = 0.5)
+  rf_fit <- randomForest(alcohol_impaired_driving_deaths ~ ., data = train_data, importance = TRUE)
   
   tibble(lm_pred = predict(lm_fit, newdata = test_data),              # return test results
          ridge_pred = as.numeric(predict(ridge_fit, newx = test_x)),
          lasso_pred = as.numeric(predict(lasso_fit, newx = test_x)),
          enet_pred = as.numeric(predict(enet_fit, newx = test_x)),
+         rf_pred = predict(rf_fit, newdata = test_data),
          test_actual = test_data$alcohol_impaired_driving_deaths,
          test_fold = k)
 }
@@ -302,7 +320,7 @@ for (i in 1:k) {
 }
 
 test_pred_all |>
-  pivot_longer(lm_pred:enet_pred, 
+  pivot_longer(lm_pred:rf_pred, 
                names_to = "type", 
                values_to = "test_pred") |>
   group_by(type, test_fold) |>
@@ -317,17 +335,19 @@ test_pred_all |>
                color = "red", width = 0.2) + 
   theme_bw() +
   labs( title="Test and Train: Alcohol Impaired Driving Deaths", 
-         y = 'Root Mean Squared Error') +
+         y = 'Root Mean Squared Error',
+        x = NULL) +
   theme(
     axis.title = element_text(size = 14),
     axis.text.y = element_text(size = 14, ),
     axis.text.x = element_text(size= 14, ),
     plot.title = element_text(size = 20)
   ) +
-  scale_x_discrete(labels=c("enet_pred"="Elastic","lasso_pred"="Lasso","lm_pred"="Linear","ridge_pred"="Ridge"))
+  scale_x_discrete(labels=c("enet_pred"="Elastic","lasso_pred"="Lasso","lm_pred"="Linear","rf_pred" = "Random Forest", "ridge_pred"="Ridge"))
 
 ```
-**All of the models intersect, so there isn't a "best" model to work with. Therefore, a linear model will be used, as it is already being used for alcohol.**
+
+As you can see linear model has the least amount of error compared to the others but you can make an argument to use other models like random forest to find predictors. 
 
 ```{r}
 
@@ -335,7 +355,7 @@ test_pred_all |>
 
 # Results
 
-Looking at Alcohol Impaired Driving Deaths: 
+Looking at Alcohol Impaired Driving Deaths predictors using linear model lm() function: 
 
 ```{r}
 
@@ -375,7 +395,7 @@ alcohol_lm |>
 Unemployment is the top predictor for alcohol impaired driving deaths. Then if everything is constant, when unemployment increases by 1, then alcohol impaired driving deaths will increase by the coefficient. Other significant predictors are Excessive Drinking, Suicides, and Population Density.  
 
 
-Now onto drug overdose deaths: 
+Now onto drug overdose deaths we are going to use random forest to find our predictors: 
 
 ```{r}
 
@@ -457,5 +477,7 @@ Research indicates that substance abuse problems are associated with an increase
 # Conclusion 
 
  
+
+# Reference
 
 
