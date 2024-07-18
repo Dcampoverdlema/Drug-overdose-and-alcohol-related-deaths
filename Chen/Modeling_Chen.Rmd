@@ -155,6 +155,24 @@ varImplot(drug_overdose_rf)
 
 ```
 
+# partial dependence plots using random forest model
+
+```{r}
+# eda 
+library(caret)
+library(pdp)
+drug_overdose_rf |>
+  pdp::partial(pred.var="hispanic") |>
+  autoplot()
+
+final_drug_rf <-ranger(drug_overdose_deaths ~ ., data = train, num.trees=500, mtry=3, min.node.size=5, importance="impurity")
+final_drug_rf |>
+  pdp::partial(pred.var="hispanic") |>
+  autoplot()
+```
+
+## binning median income by state 
+
 ```{r setup, include=FALSE}
 
 my_csv<-read_csv("data/jodie_data.csv") 
@@ -163,7 +181,10 @@ my_csv<-read_csv("data/jodie_data.csv")
 
 # create a new col called income_level with 4 levels--low, high, middle, upper middle, lower middle
 # effect of income level changes by state --random slope
-(1 + income | state) # and income could be continuous, making state a random variable 
+(1 + income | state) # and income could be continuous, making state a random variable
+
+(1|state)
+
 
 new_csv<-my_csv |> 
   left_join(select(income_state, -name), by = "state_abbreviation") |>
