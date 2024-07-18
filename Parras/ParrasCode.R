@@ -335,6 +335,38 @@ ggplot(health_data_new, aes(x = excessive_drinking_raw_value, y = alcohol_impair
 
 
 
+library(randomForest)
+set.seed(101)
+
+# Split the data into training and testing sets
+sample <- sample(c(TRUE, FALSE), nrow(health_data_drug), replace = TRUE, prob = c(0.7, 0.3))
+train <- health_data_drug[sample, ]
+test <- health_data_drug[!sample, ]
+
+# Build the Random Forest model
+rf_model <- randomForest(drug_overdose_deaths ~ ., data = train, ntree = 100)
+
+print(rf_model)
+
+# Make predictions on the test set
+predictions <- predict(rf_model, test)
+
+# Evaluate the model
+# Assuming 'drug_overdose_deaths' is a factor (classification problem)
+confusion_matrix <- table(test$drug_overdose_deaths, predictions)
+print(confusion_matrix)
+
+conf_matrix_df <- as.data.frame(confusion_matrix)
+colnames(conf_matrix_df) <- c("Reference", "Prediction", "Freq")
+
+# Plot confusion matrix
+ggplot(data = conf_matrix_df, aes(x = Reference, y = Prediction, fill = Freq)) +
+  geom_tile() +
+  geom_text(aes(label = Freq), vjust = 1) +
+  scale_fill_gradient(low = 'white', high = 'blue') +
+  ggtitle('Confusion Matrix') +
+  theme_minimal()
+
 
 
 
