@@ -28,6 +28,11 @@ execute:
 
 **Are there demographic and social factors that are predictors of drug overdose and alcohol-related incidents (e.g., driving accidents)?**
 
+## Hypothesis
+
+**The chances of drug overdoses and alcohol-related driving incidents can be predicted by demographic factors like age, gender, and race as well as social factors like substance use habits and socioeconomic status.** 
+
+
 # Data
 
 The data is collected by the University of Wisconsin Population Health Institute. It assigns a ranking based on health outcomes and health factors to each county in every state. There were originally 770 variables in the data set. Since the data set is so big, another data set was created with only the variables related to drug overdose deaths and alcohol-impaired driving deaths. Predictor variables are drug overdose deaths and alcohol-impaired driving deaths.
@@ -67,7 +72,7 @@ library(class)
 health_data_alc <- read_csv("data/final_data.csv")
 
 health_data_alc <- health_data_alc |> 
-  select(-name, -...1, -population, -drug_overdose_deaths,-homicides) |> 
+  select(-name, -...1, -population, -drug_overdose_deaths,-homicides, -adult_smoking) |> 
   filter(!is.na(alcohol_impaired_driving_deaths))
  
 health_data_alc <- na.omit(health_data_alc)
@@ -147,7 +152,7 @@ ggplot(data = merged_data, aes(x = long, y = lat, group = group)) +
   geom_polygon(aes(fill = drug_overdose_deaths_raw_value), color = "white") +
   scale_fill_gradient(low = "blue", high = "red", na.value = "grey50") +
   coord_fixed(1.3)+
- theme_minimal() +  # Apply the minimal theme
+ theme_bw() +  # Apply the minimal theme
   theme(
     axis.title = element_blank(),
     axis.text = element_blank(),
@@ -167,7 +172,7 @@ ggplot(data = merged_data, aes(x = long, y = lat, group = group)) +
   geom_polygon(aes(fill = alcohol_impaired_driving_deaths_raw_value), color = "white") +
   scale_fill_gradient(low = "blue", high = "red", na.value = "grey50",labels = scales::percent_format(scale = 100)) +
   coord_fixed(1.3) +
-  theme_minimal() +  # Apply the minimal theme
+  theme_bw() +  # Apply the minimal theme
   theme(
     axis.title = element_blank(),
     axis.text = element_blank(),
@@ -190,6 +195,31 @@ West Virginia has the highest amount of drug overdose deaths. By conducting furt
 For alcohol-impaired driving deaths, Montana had the highest amount of deaths resulting from alcohol-impaired driving. According to Forbes, Montana has the highest rate of drunk driving, with 8.57 fatal crashes involving drunk drivers for every 100,000 licensed drivers and 7.14 fatal crashes involving drunk drivers for every 100,000 state population. These rates are the highest in the country. Montana has the highest percentage of drunk drivers in the country—more than two-fifths (43.51%) of road fatalities.
 
 By analyzing the predictors of both drug overdose deaths and alcohol-impaired driving deaths, solutions and regulations can hopefully be developed to help these states with their ongoing problems. 
+
+
+Another intial EDA: 
+
+```{r}
+
+selected_data$`Income level` <- cut(selected_data$median_household_income_raw_value,
+                                    breaks = c(-Inf, 52610, 60986, 70897, Inf),
+                                    labels = c("Low", "Lower-Middle", "Upper-Middle", "High"),
+                                    right = TRUE, na.rm=TRUE)
+
+ggplot(selected_data, aes(x = adult_smoking_raw_value, y = drug_overdose_deaths_raw_value)) +
+  geom_point(size = 2, alpha = 0.7, aes(color = `Income level`)) +
+  geom_smooth(method = 'lm', se = TRUE, color="black") +
+  theme_bw() +
+  scale_x_continuous(labels=scales::percent_format()) +
+  labs(title = "Smoking Rate Relationship With Drug Overdose",
+       x = 'Adult Smoking Rate',
+       y = 'Drug Overdose Deaths per 100,000 population') +
+  scale_color_manual(values = c("Low" = "darkred", "Lower-Middle" = "red", "Upper-Middle" = "blue", "High" = "darkblue")) + 
+  theme(
+    plot.title = element_text(size = 16))
+
+```
+The scatter figure, which is broken down by income level, shows the correlation between adult smoking rates and the number of drug overdose deaths per 100,000 people. The trend line shows a positive association, implying that there is a connection between an increase in drug overdose deaths and rising smoking rates. Dark red areas are low-income areas, which tend to cluster in the higher ranges of both smoking rates and overdose deaths. High-income areas, indicated in dark blue, on the other hand, typically have lower smoking rates and fewer overdose deaths.
 
 
 # Modeling
@@ -485,12 +515,22 @@ var_imp_df$Variable <- gsub("_", " ", var_imp_df$Variable)
 
 ```
 ```{r}
+library(tools)
+var_imp_df$Variable <- toTitleCase(var_imp_df$Variable)
+
 # Plot the variable importance
 ggplot(var_imp_df, aes(x = Importance, y = reorder(Variable, Importance))) +
   geom_point(color = "red", size = 3) +
   labs(title = "Random Forest Model for Drug Over Dose Deaths", x = "Importance", y = NULL) +
   theme_bw() +
-  theme(axis.text.y = element_text(size = 12))
+  theme(axis.text.y = element_text(size = 12)) +
+  theme(
+    axis.title = element_text(size = 15),
+    axis.text.y = element_text(size = 12, ),
+    axis.text = element_text(size = 15, ),
+    axis.title.x = element_text(size= 11, ),
+    plot.title = element_text(size = 12)
+  )
 ```
 
 Random forest indicates our important variable but to look into.... finishe here jodie 
@@ -524,6 +564,12 @@ plot_american_indian_or_alaska_native <- autoplot(pdp_american)
 plot_unemployment <- autoplot(pdp_unemployment)
 plot_adult_smoking <- autoplot(pdp_adult_smoking)
 
+plot_american_indian_or_alaska_native <- plot_american_indian_or_alaska_native + theme_bw() + geom_line(color = "red") + labs(x="American Indian or Alaska Native")
+plot_unemployment <- plot_unemployment + theme_bw() + geom_line(color = "red") + labs(x="Unemployment")
+plot_adult_smoking <- plot_adult_smoking + theme_bw()+ geom_line(color = "red") + labs(x="Adult Smoking")
+pdp_children <- pdp_children + theme_bw()+ geom_line(color = "red") + labs(x="Children in a Single Parent Household")
+
+
 grid.arrange(plot_american_indian_or_alaska_native,
              plot_unemployment, plot_adult_smoking, pdp_children,  ncol = 2)
 
@@ -533,27 +579,6 @@ final_drug_rf <-ranger(drug_overdose_deaths ~ ., data = train, num.trees=500, mt
 
 Jodie analysis right here
 
-```{r}
-selected_data$`Income level` <- cut(selected_data$median_household_income_raw_value,
-                                    breaks = c(-Inf, 52610, 60986, 70897, Inf),
-                                    labels = c("Low", "Lower-Middle", "Upper-Middle", "High"),
-                                    right = TRUE, na.rm=TRUE)
-
-ggplot(selected_data, aes(x = adult_smoking_raw_value, y = drug_overdose_deaths_raw_value)) +
-  geom_point(size = 2, alpha = 0.7, aes(color = `Income level`)) +
-  geom_smooth(method = 'lm', se = TRUE, color="black") +
-  theme_minimal() +
-  scale_x_continuous(labels=scales::percent_format()) +
-  labs(title = "Smoking Rate Relationship With Drug Overdose",
-       x = 'Adult Smoking Rate',
-       y = 'Drug Overdose Deaths per 100,000 population') +
-  scale_color_manual(values = c("Low" = "darkred", "Lower-Middle" = "red", "Upper-Middle" = "blue", "High" = "darkblue")) + 
-  theme(
-    plot.title = element_text(size = 16))
-
-
-
-```
 ```{r}
 
 
@@ -572,11 +597,29 @@ Research indicates that substance abuse problems are associated with an increase
 
 **Career pathways programs:** Programs for career pathways provide low-skilled people with occupation-specific training for higher-skilled roles in rapidly expanding industries including information technology, advanced manufacturing, and health care. These programs integrate social services with academic and technical education; many also include work experience. 
 
+**Summer youth employment programs:** Summer youth employment programs give young people, often between the ages of 14 and 24, temporary jobs. Program organizers typically provide financial support for positions, and programs are managed by nonprofits or government organizations. Private sector businesses, on the other hand, could offer more competitive placements and pay participants directly. Programs may incorporate extra supports, such a work-readiness curriculum, and typically center on giving underprivileged youngsters options.
+
 
 # Conclusion 
 
- 
+**There are social predictors but there are not demographic predictors for drug overdose and alcohol-related incidents.**
+
+In the future, identifying comparable datasets to impute data from and using methods such as k-nearest neighbors (KNN) or grouping by state to fill in the missing data will be prioritized. This approach will enhance data completeness and improve the accuracy of subsequent analyses.
+
+While researching the topic, it was found that men are more likely to overdose on drugs. However, the dataset did not provide any information on the male population. Consequently, males could not be used as a demographic predictor.
+(insert  more limitations)
+
 
 # Reference
 
+“Alcohol and Drug Abuse Statistics (Facts About Addiction).” American Addiction Centers, https://americanaddictioncenters.org/addiction-statistics. Accessed July 2024.
 
+Generes, Wendy Manwarren. “Recession, Unemployment, and Drug Addiction: What's the Link?” American Addiction Centers, 21 June 2024, https://americanaddictioncenters.org/blog/recession-unemployment-and-drug-addiction-whats-the-link. Accessed July 2024.
+
+“Health Data.” County Health Rankings, https://www.countyhealthrankings.org/health-data. Accessed July 2024.
+
+“The West Virginia Drug Situation.” DEA.gov, https://www.dea.gov/sites/default/files/2018-07/DEA-WAS-DIR-024-17%20West%20Virginia%20Drug%20Situation%20-UNCLASSIFIED.pdf. Accessed July 2024.
+
+“Worst States For Drunk Driving In 2024 – Forbes Advisor.” Forbes, 3 May 2024, https://www.forbes.com/advisor/car-insurance/worst-states-for-drunk-driving/. Accessed July 2024.
+
+“2023 County Profiles Executive Summary Report.” West Virginia Department of Health and Human Resources. https://dhhr.wv.gov/vip/county-reports/Pages/2023-CSMP-Surveillance-Reports.aspx. Accessed July 2024.
