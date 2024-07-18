@@ -187,8 +187,9 @@ plot_american_indian_or_alaska_native <- autoplot(pdp_american)
 plot_unemployment <- autoplot(pdp_unemployment)
 plot_adult_smoking <- autoplot(pdp_adult_smoking)
 
-grid.arrange(plot_american_indian_or_alaska_native,
-             plot_unemployment, plot_adult_smoking, pdp_children,  ncol = 2)
+grid_pdp<-grid.arrange(plot_american_indian_or_alaska_native,
+             plot_unemployment, plot_adult_smoking, pdp_children, ncol = 2)
+grid_pdp
 
 
 final_drug_rf <-ranger(drug_overdose_deaths ~ ., data = train, num.trees=500, mtry=3, min.node.size=5, importance="impurity")
