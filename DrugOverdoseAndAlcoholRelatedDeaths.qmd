@@ -49,8 +49,6 @@ Here are some of the predictor variables picked and the reason for selecting the
 
 **Social Associations:** Reduced participation in communal life and little social interaction with others are linked to higher rates of illness and early death. Compared to those with strong networks, those without strong social networks are less likely to choose healthy lifestyles.
 
-(source: https://www.countyhealthrankings.org/health-data)
-
 
 ```{r} 
 library(janitor)
