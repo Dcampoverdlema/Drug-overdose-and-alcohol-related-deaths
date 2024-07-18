@@ -602,7 +602,7 @@ Research indicates that substance abuse problems are associated with an increase
 
 # Conclusion 
 
-**There are social predictors but there are not demographic predictors for drug overdose and alcohol-related incidents.**
+**The hypothesis is half correct. There are social predictors for alcohol-impaired driving deaths and drug overdoses, but there isn’t enough evidence from the results to justify demographic predictors**
 
 In the future, identifying comparable datasets to impute data from and using methods such as k-nearest neighbors (KNN) or grouping by state to fill in the missing data will be prioritized. This approach will enhance data completeness and improve the accuracy of subsequent analyses.
 
