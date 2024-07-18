@@ -837,11 +837,217 @@ health2 <- health |> select(-population)
 lm(alcohol_impaired_driving_deaths~log(high_school_graduation) + log(population_density) + log(american_indian_or_alaska_native) + log(suicides) )
 ```
 
-## Mixed effects
-## plotting pairswise plot to see what transformations to use (go back on this)
+## eda on unemployment for alcohol impaired deaths
 
 ```{r}
-library("lme4")
-# mixed linear models
-# random intercept--
+# new_df$`Income level` <- cut(new_df$median_household_income_raw_value,
+#                                   breaks = c(-Inf, 52610, 60986, 70897, Inf),
+#                                   labels = c("Low", "Lower-Middle", "Upper-Middle", "High"),
+#                                   right = TRUE, na.rm=TRUE)
+# 
+# new_df <- new_df %>%
+#   drop_na(excessive_drinking_raw_value, alcohol_impaired_driving_deaths_raw_value)
+
+# go back on this....based on akshay's comments 
+# include entries with at least 3000
+fifth_percentile <- quantile(new_df$population_raw_value, probs = 0.05)
+print(fifth_percentile) # 2672
+
+new_data <-new_df |>
+  filter(population_raw_value > 3000) |>
+  drop_na(alcohol_impaired_driving_deaths_raw_value)
+
+# 2 bins
+new_data$`unemp_high` = ifelse(new_data$unemployment_raw_value > 0.03447, "High", "Low")
+
+# 3 bins
+new_data$`unemp_high2` = ifelse(new_data$unemployment_raw_value <= 0.02785, "Low", 
+               ifelse(new_data$unemployment_raw_value >= 0.04233, "High", "Average"))
+
+ggplot(new_data, aes(x = excessive_drinking_raw_value, y = alcohol_impaired_driving_deaths_raw_value)) +
+  geom_point(size = 2, alpha = 0.5, aes(color = `unemp_high`)) +
+  geom_smooth(method = 'lm', se = TRUE) +
+  scale_y_continuous(labels=scales::percent_format()) +
+  scale_x_continuous(labels=scales::percent_format()) +
+  labs(title = "Counties with high excessive drinking rate have low unemployment rate",
+       x = '% of adults that excessively drink',
+       y = '% of driving deaths with alcohol involvement') +
+  scale_color_manual(values = c("Low" = "green", "High" = "red")) 
+
+p <- ggplot(new_data, aes(x = excessive_drinking_raw_value, y = alcohol_impaired_driving_deaths_raw_value)) +
+  geom_point(size = 2, alpha = 0.5, aes(color = `unemp_high2`)) +
+  geom_smooth(method = 'lm', se = TRUE) +
+  scale_y_continuous(labels=scales::percent_format()) +
+  scale_x_continuous(labels=scales::percent_format()) +
+  labs(title = "Counties with high excessive drinking rate have low unemployment rate",
+       x = '% of adults that excessively drink',
+       y = '% of driving deaths with alcohol involvement') +
+  scale_color_manual(values = c("Low" = "green", "Average" = "gray", "High" = "red")) 
+
+library(grid)
+# footnote <- textGrob("Restricting to counties with population > 3000 ", 
+#                      x = unit(0.85, "npc") - unit(2, "mm"), 
+#                      y = unit(1, "mm"), just = c("right", "bottom"), 
+#                      gp = gpar(fontsize = 8, col = "darkgray"))
+
+p + labs(caption = "*Restricting to counties with population > 3000")
+
+
+# we have 50% data in the average bin
+
+
+
+```
+
+## eda on disconnected youth and alcohol impaired rate, colored by excessive drinking 
+```{r}
+new_data$`Excessive Drinking Level` = ifelse(new_data$excessive_drinking_raw_value > 0.16842, "High", "Low")
+new_data$`Excessive Drinking Level` = ifelse(new_data$excessive_drinking_raw_value <= 0.14979, "Low",
+                                             ifelse(new_data$excessive_drinking_raw_value >= 0.18465, "High", "Average"))
+
+ggplot(new_data, aes(x = log(disconnected_youth_raw_value), y = alcohol_impaired_driving_deaths_raw_value)) +
+  geom_point(size = 2, aes(color=`Excessive Drinking Level`), alpha = 0.5 ) + # aes(color = `unemp_high2`) +
+  scale_y_continuous(labels=scales::percent_format()) +
+  labs(title = "Excessive Drinking and Disconnected Youth",
+       x = 'log(disconnected youth %)',
+       y = '% of driving deaths with alcohol involvement') +
+  scale_color_manual(values = c("Low" = "green", "Average" = "gray", "High" = "red")) 
+
+```
+
+## or excessive drinking vs alcohol inovlvement, colored by disconnected youth
+
+```{r}
+new_data$`Disconnected Youth` = ifelse(new_data$disconnected_youth_raw_value > 0.0813, "High", "Low")
+new_data$`Disconnected Youth` = ifelse(new_data$disconnected_youth_raw_value <= 0.0587, "Low",
+                                             ifelse(new_data$disconnected_youth_raw_value >= 0.1124, "High", "Average"))
+
+new_data_dropped<-new_data |>
+  drop_na(disconnected_youth_raw_value)
+
+ggplot(new_data_dropped, aes(x = excessive_drinking_raw_value, y = alcohol_impaired_driving_deaths_raw_value)) +
+  geom_point(size = 2, aes(color=`Disconnected Youth`), alpha = 0.5 ) + # aes(color = `unemp_high2`) +
+  scale_x_continuous(labels=scales::percent_format())+
+  scale_y_continuous(labels=scales::percent_format()) +
+  labs(title = "Excessive Drinking and Disconnected Youth",
+       x = 'Excessive Drinking Rate',
+       y = '% of driving deaths with alcohol involvement') +
+  scale_color_manual(vunemployed = c("Low" = "green", "Average" = "yellow", "High" = "red")) +
+  theme_bw() 
+
+```
+
+## eda for alaskan native vs alcohol involvement
+
+```{r}
+ggplot(new_data, aes(x = log(x_american_indian_or_alaska_native_raw_value), y = alcohol_impaired_driving_deaths_raw_value)) +
+  geom_point(size = 2, alpha = 0.5 ) +
+  scale_y_continuous(labels=scales::percent_format()) +
+  scale_x_continuous(labels=scales::percent_format())
+
+```
+
+## eda for median household income vs alcohol invovlement, colored by unemployment (specifically for Montana)
+
+```{r}
+MT_data <-new_df |>
+  filter(state_abbreviation == "MT", population_raw_value > 3000) |>
+  drop_na(alcohol_impaired_driving_deaths_raw_value) |>
+  mutate(income_label=round(median_household_income_raw_value/1000, 0)) |> 
+  mutate(income_label = paste0('$',as.character(income_label), 'K')) |> 
+  mutate(income_label = replace(income_label, sample(row_number(),
+                                                     size = ceiling(0.7 * n()),
+                                                     replace = F), NA))
+
+# 2 bins
+MT_data$`Income Level` = ifelse(MT_data$median_household_income_raw_value > 60350, "High", "Low")
+
+# 3 bins
+MT_data$`Income Level` = ifelse(MT_data$median_household_income_raw_value <= 53577, "Low", 
+               ifelse(MT_data$median_household_income_raw_value >= 68006, "High", "Average"))
+
+p<-ggplot(MT_data, aes(x = unemployment_raw_value, y = alcohol_impaired_driving_deaths_raw_value)) +
+  geom_point(size = 2, alpha = 0.5, aes(color = `Income Level`)) +
+  ggrepel::geom_text_repel(aes(label = income_label, color = `Income Level`), 
+                           show.legend = F) +
+  geom_smooth(aes(color = `Income Level`), se=FALSE) +
+  scale_y_continuous(labels=scales::percent_format()) +
+  scale_x_continuous(labels=scales::percent_format()) +
+  labs(title = "In Montana, low income counties have higher unemployment rates \nand high alcohol deaths",
+       x = 'Unemployment Rate',
+       y = '% of driving deaths with alcohol involvement') +
+  scale_color_manual(values = c("Low" = "darkred", "Average" = "tan", "High" = "darkblue")) +
+  theme_bw() 
+
+p + labs(caption = "*Restricting to counties with population > 3000")
+```
+
+```{r}
+MTND_data <-new_df |>
+  filter(state_abbreviation %in% c("ND"), population_raw_value > 3000) |>
+  drop_na(alcohol_impaired_driving_deaths_raw_value) 
+
+# 2 bins
+MT_data$`Income Level` = ifelse(MT_data$median_household_income_raw_value > 60350, "High", "Low")
+
+# 3 bins
+MT_data$`Income Level` = ifelse(MT_data$median_household_income_raw_value <= 53577, "Low", 
+               ifelse(MT_data$median_household_income_raw_value >= 68006, "High", "Average"))
+
+p<-ggplot(MT_data, aes(x = unemployment_raw_value, y = alcohol_impaired_driving_deaths_raw_value)) +
+  geom_point(size = 2, alpha = 0.5, aes(color = `Income Level`)) +
+  #geom_smooth(aes(color = `Income Level`)) +
+  scale_y_continuous(labels=scales::percent_format()) +
+  scale_x_continuous(labels=scales::percent_format()) +
+  labs(title = "In Montana, low income counties have higher unemployment rates \nand high alcohol deaths",
+       x = 'Unemployment Rate',
+       y = '% of driving deaths with alcohol involvement') +
+  scale_color_manual(values = c("Low" = "darkred", "Average" = "tan", "High" = "darkblue")) 
+
+p + labs(caption = "*Restricting to counties with population > 3000")
+```
+
+
+```{r}
+new_data <-new_df |>
+  filter(population_raw_value > 3000) |>
+  drop_na(alcohol_impaired_driving_deaths_raw_value)
+
+# 2 bins
+new_data$`unemp_high` = ifelse(new_data$unemployment_raw_value > 0.03447, "High", "Low")
+
+# 3 bins
+new_data$`unemp_high2` = ifelse(new_data$unemployment_raw_value <= 0.02785, "Low", 
+               ifelse(new_data$unemployment_raw_value >= 0.04233, "High", "Average"))
+
+p<-ggplot(new_data, aes(x = median_household_income_raw_value, y = alcohol_impaired_driving_deaths_raw_value)) +
+  geom_point(size = 2, alpha = 0.5, aes(color = `unemp_high`)) +
+  geom_smooth(method = 'lm', se = TRUE) +
+  scale_y_continuous(labels=scales::percent_format()) +
+  labs(title = "",
+       x = 'Median household income',
+       y = '% of driving deaths with alcohol involvement') +
+  scale_color_manual(values = c("Low" = "green", "High" = "red")) 
+
+p + labs(caption = "*Restricting to counties with population > 3000")
+
+
+
+p <- ggplot(new_data, aes(x = excessive_drinking_raw_value, y = alcohol_impaired_driving_deaths_raw_value)) +
+  geom_point(size = 2, alpha = 0.5, aes(color = `unemp_high2`)) +
+  geom_smooth(method = 'lm', se = TRUE) +
+  scale_y_continuous(labels=scales::percent_format()) +
+  scale_x_continuous(labels=scales::percent_format()) +
+  labs(title = "Counties with high excessive drinking rate have low unemployment rate",
+       x = '% of adults that excessively drink',
+       y = '% of driving deaths with alcohol involvement') +
+  scale_color_manual(values = c("Low" = "green", "Average" = "gray", "High" = "red")) 
+
+library(grid)
+# footnote <- textGrob("Restricting to counties with population > 3000 ", 
+#                      x = unit(0.85, "npc") - unit(2, "mm"), 
+#                      y = unit(1, "mm"), just = c("right", "bottom"), 
+#                      gp = gpar(fontsize = 8, col = "darkgray"))
+
+p + labs(caption = "*Restricting to counties with population > 3000")
 ```
