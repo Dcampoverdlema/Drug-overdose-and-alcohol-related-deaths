@@ -4,7 +4,7 @@ library(glmnet)
 library(broom)
 library(ggfortify)
 library(VIM)
-library(cv)
+library(caret)
 ```
 
 ```{r}
@@ -31,30 +31,25 @@ head(health)
 
 
 ```{r}
-response <- health$alcohol_impaired_driving_deaths
-predictors <- as.matrix(health |>  select(-alcohol_impaired_driving_deaths))
-
-set.seed(123)  
-cv_fit <- cv.glmnet(predictors, response, alpha = 1, nfolds = 10)
-
-print(cv_fit)
-
-plot(cv_fit)
-
-best_lambda <- cv_fit$lambda.min
-print(paste("Best lambda value: ", best_lambda))
-
-final_model <- glmnet(predictors, response, alpha = 1, lambda = best_lambda)
-
-print(coef(final_model))
-
+set.seed(123)
+train <- health |> 
+  slice_sample(prop = 0.5)
+test <- health |> 
+  anti_join(train)
 
 ```
-qqplot model diagnostic 
 
 ```{r}
-health_lm <- lm(alcohol_impaired_driving_deaths ~ ., data = health)
-cv(health_lm)
+health_lm <- lm(alcohol_impaired_driving_deaths ~ ., data = train)
+
+train_control <- trainControl(method = "cv", number = 10)
+cv_model <- train(alcohol_impaired_driving_deaths ~ ., data = train, method = "lm", trControl = train_control)
+
+cv_model$results
+```
+ 
+
+```{r}
 
 health_lm |> 
   tidy() |> 
