@@ -161,14 +161,42 @@ varImplot(drug_overdose_rf)
 # eda 
 library(caret)
 library(pdp)
-drug_overdose_rf |>
-  pdp::partial(pred.var="hispanic") |>
+library(gridExtra)
+# pdp_hispanic<-drug_overdose_rf |>
+#   pdp::partial(pred.var="hispanic") |>
+#   autoplot()
+
+pdp_american<-drug_overdose_rf |>
+  pdp::partial(pred.var="american_indian_or_alaska_native") |>
   autoplot()
+
+pdp_unemployment<-drug_overdose_rf |>
+  pdp::partial(pred.var="unemployment") |>
+  autoplot()
+
+pdp_adult_smoking<-drug_overdose_rf |>
+  pdp::partial(pred.var="adult_smoking") |>
+  autoplot()
+
+pdp_children<-drug_overdose_rf |>
+  pdp::partial(pred.var="children_in_single_parent_households") |>
+  autoplot()
+
+plot_hispanic <- autoplot(pdp_hispanic)
+plot_american_indian_or_alaska_native <- autoplot(pdp_american)
+plot_unemployment <- autoplot(pdp_unemployment)
+plot_adult_smoking <- autoplot(pdp_adult_smoking)
+
+grid.arrange(plot_american_indian_or_alaska_native,
+             plot_unemployment, plot_adult_smoking, pdp_children,  ncol = 2)
+
 
 final_drug_rf <-ranger(drug_overdose_deaths ~ ., data = train, num.trees=500, mtry=3, min.node.size=5, importance="impurity")
 final_drug_rf |>
   pdp::partial(pred.var="hispanic") |>
   autoplot()
+
+# low percentage of hispanic predicts drug overdose deaths
 ```
 
 ## binning median income by state 
