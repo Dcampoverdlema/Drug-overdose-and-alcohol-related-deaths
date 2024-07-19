@@ -247,7 +247,7 @@ p<-ggplot(MT_data, aes(x = unemployment_raw_value, y = alcohol_impaired_driving_
   geom_smooth(aes(color = `Income Level`), se=FALSE) +
   scale_y_continuous(labels=scales::percent_format()) +
   scale_x_continuous(labels=scales::percent_format()) +
-  labs(title = "Montana counties: unemploymemnt relationship with alcohol driving deaths",
+  labs(title = "Montana Counties: Unemploymemnt Relationship with Alcohol Driving Deaths",
        x = 'Unemployment Rate',
        y = '% of driving deaths with alcohol involvement') +
   scale_color_manual(values = c("Low" = "blue", "Average" = "red", "High" = "midnightblue")) +
