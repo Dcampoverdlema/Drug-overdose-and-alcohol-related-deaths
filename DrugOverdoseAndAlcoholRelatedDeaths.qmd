@@ -169,8 +169,11 @@ ggplot(data = merged_data, aes(x = long, y = lat, group = group)) +
     title = "Drug Overdose Deaths by State",
     subtitle = "Data source: County Health Rankings & Roadmaps (https://www.countyhealthrankings.org/)",
     fill = "*Drug Overdose Deaths"
+  ) +
+  annotate(
+    "text", x = Inf, y = -Inf, label = "Figure 1", 
+    hjust = 1.1, vjust = -1.1, size = 5, colour = "black"
   )
-
 
 ggplot(data = merged_data, aes(x = long, y = lat, group = group)) +
   geom_polygon(aes(fill = alcohol_impaired_driving_deaths_raw_value), color = "white") +
@@ -188,15 +191,20 @@ ggplot(data = merged_data, aes(x = long, y = lat, group = group)) +
     title = "Alcohol Impaired Driving Deaths by State",
     subtitle = "Data source: County Health Rankings & Roadmaps (https://www.countyhealthrankings.org/)",
     fill = "*Alcohol Driving Deaths",
-    caption = "*Percentage of motor vehicle crash deaths with alcohol involvement."
+    caption = "*Percentage of motor vehicle crash deaths with alcohol involvement.",
+  )+
+  annotate(
+    "text", x = Inf, y = -Inf, label = "Figure 2", 
+    hjust = 1.1, vjust = -1.1, size = 5, colour = "black"
   )
+
 
 
 ```
 
-West Virginia has the highest amount of drug overdose deaths. By conducting further research on West Virginia, it was found that the state leads the nation in opioid-related drug overdose deaths. According to the Drug Enforcement Administration, West Virginia has one of the highest prescription rates for opioids in the country and also has a high prevalence of controlled prescription drug addiction and trafficking. Furthermore, the usage of illegal prescription drugs was a factor in almost 61% of state overdose deaths in 2015.
+In **figure 1**West Virginia has the highest amount of drug overdose deaths. By conducting further research on West Virginia, it was found that the state leads the nation in opioid-related drug overdose deaths. According to the Drug Enforcement Administration, West Virginia has one of the highest prescription rates for opioids in the country and also has a high prevalence of controlled prescription drug addiction and trafficking. Furthermore, the usage of illegal prescription drugs was a factor in almost 61% of state overdose deaths in 2015.
 
-For alcohol-impaired driving deaths, Montana had the highest amount of deaths resulting from alcohol-impaired driving. According to Forbes, Montana has the highest rate of drunk driving, with 8.57 fatal crashes involving drunk drivers for every 100,000 licensed drivers and 7.14 fatal crashes involving drunk drivers for every 100,000 state population. These rates are the highest in the country. Montana has the highest percentage of drunk drivers in the country—more than two-fifths (43.51%) of road fatalities.
+In **figure 2** alcohol-impaired driving deaths, Montana had the highest amount of deaths resulting from alcohol-impaired driving. According to Forbes, Montana has the highest rate of drunk driving, with 8.57 fatal crashes involving drunk drivers for every 100,000 licensed drivers and 7.14 fatal crashes involving drunk drivers for every 100,000 state population. These rates are the highest in the country. Montana has the highest percentage of drunk drivers in the country—more than two-fifths (43.51%) of road fatalities.
 
 By analyzing the predictors of both drug overdose deaths and alcohol-impaired driving deaths, solutions and regulations can hopefully be developed to help these states with their ongoing problems. 
 
@@ -222,61 +230,22 @@ ggplot(filtered_data, aes(x = adult_smoking_raw_value, y = drug_overdose_deaths_
   theme(
     plot.title = element_text(size = 16),
     legend.title = element_text(size=15), 
-    legend.text = element_text(size=15))
+    legend.text = element_text(size=15)) +
+  annotate(
+    "text", x = Inf, y = -Inf, label = "Figure 3", 
+    hjust = 1.1, vjust = -1.1, size = 5, colour = "black"
+  )
 
 ```
-The scatter figure, which is broken down by income level, shows the correlation between adult smoking rates and the number of drug overdose deaths per 100,000 people. The trend line shows a positive association, implying that there is a connection between an increase in drug overdose deaths and rising smoking rates. Dark red areas are low-income areas, which tend to cluster in the higher ranges of both smoking rates and overdose deaths. High-income areas, indicated in dark blue, on the other hand, typically have lower smoking rates and fewer overdose deaths.
+**Figure 3**, which is broken down by income level, shows the correlation between adult smoking rates and the number of drug overdose deaths per 100,000 people. The trend line shows a positive association, implying that there is a connection between an increase in drug overdose deaths and rising smoking rates. Dark red areas are low-income areas, which tend to cluster in the higher ranges of both smoking rates and overdose deaths. High-income areas, indicated in dark blue, on the other hand, typically have lower smoking rates and fewer overdose deaths.
 
 Lets take a deeper look into Montana Alcohol imparaierd driving deaths by counties: 
 
 ```{r}
-MT_data <-selected_data |>
-  filter(state_abbreviation == "MT", population_raw_value > 3000) |>
-  drop_na(alcohol_impaired_driving_deaths_raw_value) |>
-  mutate(income_label=round(median_household_income_raw_value/1000, 0)) |> 
-  mutate(income_label = paste0('$',as.character(income_label), 'K')) |> 
-  mutate(income_label = replace(income_label, sample(row_number(),
-                                                     size = ceiling(0.7 * n()),
-                                                     replace = F), NA))
-
-# 2 bins
-MT_data$`Income Level` = ifelse(MT_data$median_household_income_raw_value > 60350, "High", "Low")
-
-# 3 bins
-MT_data$`Income Level` = ifelse(MT_data$median_household_income_raw_value <= 53577, "Low", 
-               ifelse(MT_data$median_household_income_raw_value >= 68006, "High", "Average"))
-
-p<-ggplot(MT_data, aes(x = unemployment_raw_value, y = alcohol_impaired_driving_deaths_raw_value)) +
-  geom_point(size = 2, alpha = 0.5, aes(color = `Income Level`)) +
-  ggrepel::geom_text_repel(aes(label = income_label, color = `Income Level`), 
-                           show.legend = F) +
-  geom_smooth(aes(color = `Income Level`), se=FALSE) +
-  scale_y_continuous(labels=scales::percent_format()) +
-  scale_x_continuous(labels=scales::percent_format()) +
-  labs(title = "Montana Counties: Unemploymemnt Relationship with Alcohol Driving Deaths",
-       x = 'Unemployment Rate',
-       y = '% of Driving Deaths with Alcohol Involvement') +
-  scale_color_manual(values = c("Low" = "blue", "Average" = "red", "High" = "midnightblue")) +
-  theme_bw() + 
-  theme(legend.title = element_text(size=15), 
-    legend.text = element_text(size=15))
-
-p + labs(caption = "*Restricting to counties with population > 3000")
+#Jodie add graph here!!! >:(
 ```
 
-The graph shows the association, broken down by income level, between unemployment rates and the proportion of alcohol-related driving deaths in Montana counties. To provide a more accurate depiction, the data only includes counties with a population of more than three thousand people.
-
-**Three income levels are represented by the colors of the counties:** 
-
-Low (blue), Average (red), and High (midnight blue). Counties are represented as points in the scatter plot, and each income level is represented by a smoother trend line. Plotting the percentage of driving deaths caused by alcohol uses the y-axis, while the x-axis represents the unemployment rate.
-
-**The trend lines show different trends according to income levels:**
-
-Higher unemployment rates are typically accompanied by a declining trend in alcohol-related driving fatalities in high-income areas (midnight blue).
-
-Counties with average incomes (red) display a more intricate and dynamic pattern, indicating a correlation between moderate unemployment rates and an increased number of alcohol-related driving deaths.
-Low-income counties (blue) have a distinctive pattern in which a considerable decrease in alcohol-related driving-related fatalities is correlated with greater unemployment rates, and vice versa.
-In order to put certain data points in context, some points are additionally labeled with the median household income (in thousands).
+add your description keep it formal >:(
 
 
 # Modeling
@@ -435,7 +404,7 @@ test_pred_all |>
 
 ```
 
-As you can see linear model has the least amount of error compared to the others but you can make an argument to use other models like random forest to find predictors. 
+The linear model has the least amount of error compared to the others but could make an argument to use other models like random forest to find predictors. 
 
 ```{r}
 
@@ -450,7 +419,8 @@ Looking at Alcohol Impaired Driving Deaths predictors using linear model lm() fu
 alcohol_lm <- lm(alcohol_impaired_driving_deaths ~ . , data=health_data_alc)
 
 alcohol_lm |>
-  tidy() |>
+  tidy(conf.int = T) |>
+  
   mutate(
     term = gsub("_", " ", term),
     term = sapply(term, function(x) { paste(toupper(substring(x, 1, 1)), substring(x, 2), sep = "", collapse = " ") }), 
@@ -465,7 +435,7 @@ alcohol_lm |>
   ) |> 
   ggplot(aes(x = estimate, y = term, fill = estimate)) +
   geom_vline(xintercept = 0, linetype = "dashed", color = "black") +
-  geom_errorbarh(aes(xmin = estimate - std.error, xmax = estimate + std.error),
+  geom_errorbarh(aes(xmin =conf.low, xmax =conf.high),
                  height = 0.2, linewidth = 2, color = "red", show.legend = FALSE) +
   geom_point(aes(color = estimate), size = 1.8, shape = 21, fill = "black", show.legend = FALSE) +
   labs(y = NULL,x="Coefficient") +
