@@ -216,7 +216,9 @@ ggplot(filtered_data, aes(x = adult_smoking_raw_value, y = drug_overdose_deaths_
        y = 'Drug Overdose Deaths per 100,000 population') +
   scale_color_manual(values = c("Low" = "darkred", "Lower-Middle" = "red", "Upper-Middle" = "blue", "High" = "darkblue")) + 
   theme(
-    plot.title = element_text(size = 16))
+    plot.title = element_text(size = 16),
+    legend.title = element_text(size=15), 
+    legend.text = element_text(size=15))
 
 ```
 The scatter figure, which is broken down by income level, shows the correlation between adult smoking rates and the number of drug overdose deaths per 100,000 people. The trend line shows a positive association, implying that there is a connection between an increase in drug overdose deaths and rising smoking rates. Dark red areas are low-income areas, which tend to cluster in the higher ranges of both smoking rates and overdose deaths. High-income areas, indicated in dark blue, on the other hand, typically have lower smoking rates and fewer overdose deaths.
@@ -249,9 +251,11 @@ p<-ggplot(MT_data, aes(x = unemployment_raw_value, y = alcohol_impaired_driving_
   scale_x_continuous(labels=scales::percent_format()) +
   labs(title = "Montana Counties: Unemploymemnt Relationship with Alcohol Driving Deaths",
        x = 'Unemployment Rate',
-       y = '% of driving deaths with alcohol involvement') +
+       y = '% of Driving Deaths with Alcohol Involvement') +
   scale_color_manual(values = c("Low" = "blue", "Average" = "red", "High" = "midnightblue")) +
-  theme_bw() 
+  theme_bw() + 
+  theme(legend.title = element_text(size=15), 
+    legend.text = element_text(size=15))
 
 p + labs(caption = "*Restricting to counties with population > 3000")
 ```
