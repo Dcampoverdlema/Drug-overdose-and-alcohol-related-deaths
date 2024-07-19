@@ -221,6 +221,43 @@ ggplot(filtered_data, aes(x = adult_smoking_raw_value, y = drug_overdose_deaths_
 ```
 The scatter figure, which is broken down by income level, shows the correlation between adult smoking rates and the number of drug overdose deaths per 100,000 people. The trend line shows a positive association, implying that there is a connection between an increase in drug overdose deaths and rising smoking rates. Dark red areas are low-income areas, which tend to cluster in the higher ranges of both smoking rates and overdose deaths. High-income areas, indicated in dark blue, on the other hand, typically have lower smoking rates and fewer overdose deaths.
 
+Now lets take a deeper look into Montana Alcohol imparaierd driving deaths by counties: 
+
+```{r}
+MT_data <-selected_data |>
+  filter(state_abbreviation == "MT", population_raw_value > 3000) |>
+  drop_na(alcohol_impaired_driving_deaths_raw_value) |>
+  mutate(income_label=round(median_household_income_raw_value/1000, 0)) |> 
+  mutate(income_label = paste0('$',as.character(income_label), 'K')) |> 
+  mutate(income_label = replace(income_label, sample(row_number(),
+                                                     size = ceiling(0.7 * n()),
+                                                     replace = F), NA))
+
+# 2 bins
+MT_data$`Income Level` = ifelse(MT_data$median_household_income_raw_value > 60350, "High", "Low")
+
+# 3 bins
+MT_data$`Income Level` = ifelse(MT_data$median_household_income_raw_value <= 53577, "Low", 
+               ifelse(MT_data$median_household_income_raw_value >= 68006, "High", "Average"))
+
+p<-ggplot(MT_data, aes(x = unemployment_raw_value, y = alcohol_impaired_driving_deaths_raw_value)) +
+  geom_point(size = 2, alpha = 0.5, aes(color = `Income Level`)) +
+  ggrepel::geom_text_repel(aes(label = income_label, color = `Income Level`), 
+                           show.legend = F) +
+  geom_smooth(aes(color = `Income Level`), se=FALSE) +
+  scale_y_continuous(labels=scales::percent_format()) +
+  scale_x_continuous(labels=scales::percent_format()) +
+  labs(title = "Montana counties: unemploymemnt relationship with alcohol driving deaths",
+       x = 'Unemployment Rate',
+       y = '% of driving deaths with alcohol involvement') +
+  scale_color_manual(values = c("Low" = "blue", "Average" = "red", "High" = "midnightblue")) +
+  theme_bw() 
+
+p + labs(caption = "*Restricting to counties with population > 3000")
+```
+
+jodie description here!! >:(
+
 
 # Modeling
 
