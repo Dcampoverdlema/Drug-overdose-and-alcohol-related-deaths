@@ -204,11 +204,13 @@ selected_data$`Income level` <- cut(selected_data$median_household_income_raw_va
                                     labels = c("Low", "Lower-Middle", "Upper-Middle", "High"),
                                     right = TRUE, na.rm=TRUE)
 
-ggplot(selected_data, aes(x = adult_smoking_raw_value, y = drug_overdose_deaths_raw_value)) +
+filtered_data <- selected_data[!is.na(selected_data$`Income level`), ]
+
+ggplot(filtered_data, aes(x = adult_smoking_raw_value, y = drug_overdose_deaths_raw_value)) +
   geom_point(size = 2, alpha = 0.7, aes(color = `Income level`)) +
-  geom_smooth(method = 'lm', se = TRUE, color="black") +
+  geom_smooth(method = 'lm', se = TRUE, color = "black") +
   theme_bw() +
-  scale_x_continuous(labels=scales::percent_format()) +
+  scale_x_continuous(labels = scales::percent_format()) +
   labs(title = "Smoking Rate Relationship With Drug Overdose",
        x = 'Adult Smoking Rate',
        y = 'Drug Overdose Deaths per 100,000 population') +
@@ -604,7 +606,7 @@ Research indicates that substance abuse problems are associated with an increase
 
 In the future, identifying comparable datasets to impute data from and using methods such as k-nearest neighbors (KNN) or grouping by state to fill in the missing data will be prioritized. This approach will enhance data completeness and improve the accuracy of subsequent analyses.
 
-While researching the topic, it was found that men are more likely to overdose on drugs. However, the dataset did not provide any information on the male population. Consequently, males could not be used as a demographic predictor.
+While researching the topic, it was found that men are more likely to overdose on drugs. However, the dataset did not provide any information on the male population. Consequently, males could not be used as a demographic predictor. Additionally there was a lot of missing data 
 (insert  more limitations)
 
 
