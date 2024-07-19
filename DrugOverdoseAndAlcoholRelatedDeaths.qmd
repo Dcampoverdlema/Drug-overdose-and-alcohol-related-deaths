@@ -19,18 +19,24 @@ execute:
 
 # Introduction
 
-  In 2022, 46.8 million Americans who were twelve years of age or older struggled with a drug use disorder.  Eight million Americans aged twelve and older battled alcohol and drug use issues at the same time that year. 
+In 2022, 46.8 million Americans who were twelve years of age or older struggled with a drug use disorder.  Eight million Americans aged twelve and older battled alcohol and drug use issues at the same time that year.  Use of drugs and alcohol has substantial financial consequences. Every year, excessive alcohol use costs 249 billion dollars in lost productivity, medical expenditures, and criminal justice costs. In contrast, illicit drug usage costs 193 billion dollars in lost productivity, criminality, and medical costs. Communities can benefit from adopting and putting into practice policies that lessen prescription drug abuse and excessive alcohol consumption.
 
-  Use of drugs and alcohol has substantial financial consequences. Every year, excessive alcohol use costs 249 billion dollars in lost productivity, medical expenditures, and criminal justice costs. In contrast, illicit drug usage costs 193 billion dollars in lost productivity, criminality, and medical costs. Communities can benefit from adopting and putting into practice policies that lessen prescription drug abuse and excessive alcohol consumption.
+From the research, the question we are going to answer, is there demographic and social factors that are predictors of drug overdose and alcohol-related incidents (e.g., driving accidents)?
+
+Our hypothesis we came to is, the chances of drug overdoses and alcohol-related driving incidents can be predicted by demographic factors like age, gender, and race as well as social factors like substance use habits and socioeconomic status. 
+
+Certain demographic variables—like age, gender, and race—have a major impact on the risk of drug overdoses and incidents involving alcohol and driving. For example, middle-aged people may be at risk from long-term substance use, while younger people may be at risk from peer pressure and experimentation.
+Another important factor is gender: it's possible that men experience higher rates of substance abuse and related incidents than women do, possibly as a result of differing social behaviors and stress reactions. Differences in socioeconomic status, community support, and access to healthcare can all contribute to racial disparities.
+Social factors hold equal significance. Substance use patterns, such as the kind and quantity of drugs or alcohol consumed, are strong indicators of incidents linked to substance use. Furthermore, access to treatment or preventive resources, as well as patterns of substance use, can be influenced by socioeconomic status, which includes factors like education, work status, and income level.
+Tailored interventions can be devised through the identification and comprehension of these demographic and social variables. By customizing these interventions to target particular high-risk populations, their effectiveness can be increased and the population's overall rate of drug overdoses and alcohol-related driving accidents can be decreased.
 
 
-## Our Question
 
-**Are there demographic and social factors that are predictors of drug overdose and alcohol-related incidents (e.g., driving accidents)?**
 
-## Hypothesis
 
-**The chances of drug overdoses and alcohol-related driving incidents can be predicted by demographic factors like age, gender, and race as well as social factors like substance use habits and socioeconomic status.** 
+
+
+
 
 
 # Data
@@ -195,8 +201,6 @@ For alcohol-impaired driving deaths, Montana had the highest amount of deaths re
 By analyzing the predictors of both drug overdose deaths and alcohol-impaired driving deaths, solutions and regulations can hopefully be developed to help these states with their ongoing problems. 
 
 
-Another intial EDA: 
-
 ```{r}
 
 selected_data$`Income level` <- cut(selected_data$median_household_income_raw_value,
@@ -223,7 +227,7 @@ ggplot(filtered_data, aes(x = adult_smoking_raw_value, y = drug_overdose_deaths_
 ```
 The scatter figure, which is broken down by income level, shows the correlation between adult smoking rates and the number of drug overdose deaths per 100,000 people. The trend line shows a positive association, implying that there is a connection between an increase in drug overdose deaths and rising smoking rates. Dark red areas are low-income areas, which tend to cluster in the higher ranges of both smoking rates and overdose deaths. High-income areas, indicated in dark blue, on the other hand, typically have lower smoking rates and fewer overdose deaths.
 
-Now lets take a deeper look into Montana Alcohol imparaierd driving deaths by counties: 
+Lets take a deeper look into Montana Alcohol imparaierd driving deaths by counties: 
 
 ```{r}
 MT_data <-selected_data |>
@@ -260,7 +264,19 @@ p<-ggplot(MT_data, aes(x = unemployment_raw_value, y = alcohol_impaired_driving_
 p + labs(caption = "*Restricting to counties with population > 3000")
 ```
 
-jodie description here!! >:(
+The graph shows the association, broken down by income level, between unemployment rates and the proportion of alcohol-related driving deaths in Montana counties. To provide a more accurate depiction, the data only includes counties with a population of more than three thousand people.
+
+**Three income levels are represented by the colors of the counties:** 
+
+Low (blue), Average (red), and High (midnight blue). Counties are represented as points in the scatter plot, and each income level is represented by a smoother trend line. Plotting the percentage of driving deaths caused by alcohol uses the y-axis, while the x-axis represents the unemployment rate.
+
+**The trend lines show different trends according to income levels:**
+
+Higher unemployment rates are typically accompanied by a declining trend in alcohol-related driving fatalities in high-income areas (midnight blue).
+
+Counties with average incomes (red) display a more intricate and dynamic pattern, indicating a correlation between moderate unemployment rates and an increased number of alcohol-related driving deaths.
+Low-income counties (blue) have a distinctive pattern in which a considerable decrease in alcohol-related driving-related fatalities is correlated with greater unemployment rates, and vice versa.
+In order to put certain data points in context, some points are additionally labeled with the median household income (in thousands).
 
 
 # Modeling
