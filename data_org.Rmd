@@ -71,9 +71,7 @@ selected_data <- health_data |>
     College_Education_Rate, Children_In_Poverty, Single_Parent_House,
     Social_Associations, Pop_Under_18, 
     Pop_Over_65, NH_Black, 
-    American_Or_Alaska_Native, Asian_Pop, 
-    Pacific_Islander, Hispanic_Pop, 
-    NH_White, English_Profic, 
+    American_Or_Alaska_Native, Hispanic_Pop, 
     Female_Pop, Rural_Pop
   )
 selected_data <- selected_data |> 
@@ -82,6 +80,7 @@ selected_data <- selected_data |>
     as.numeric
   ))
 
+write.csv(selected_data, "new_health.csv")
 
 ```
 

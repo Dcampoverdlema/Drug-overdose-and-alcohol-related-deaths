@@ -175,6 +175,7 @@ pdp_american<-drug_overdose_rf |>
   pdp::partial(pred.var="american_indian_or_alaska_native") |>
   autoplot()
 
+# cutoff 8%
 pdp_unemployment<-drug_overdose_rf |>
   pdp::partial(pred.var="unemployment") |>
   autoplot()
@@ -191,6 +192,78 @@ plot_hispanic <- autoplot(pdp_hispanic)
 plot_american_indian_or_alaska_native <- autoplot(pdp_american)
 plot_unemployment <- autoplot(pdp_unemployment)
 plot_adult_smoking <- autoplot(pdp_adult_smoking)
+
+
+
+grid_pdp<-grid.arrange(plot_american_indian_or_alaska_native,
+             plot_unemployment, plot_adult_smoking, pdp_children, ncol = 2)
+grid_pdp
+
+# plot_adult_smoking + labs(x = 'Adsd') to relabel the axes
+
+```
+
+```{r}
+drugs_df2 <- drugs_df |>
+  mutate(employment = 1-unemployment)
+train<-drugs_df2 |>
+  slice_sample(prop=0.5)
+test<-drugs_df2|>
+  anti_join(train)
+
+x_train<- train |>
+  select(-drug_overdose_deaths) |>
+  as.matrix()
+
+x_test <- test |>
+  select(-drug_overdose_deaths) |>
+  as.matrix()
+
+library(caret)
+library(tidyverse)
+library(ranger)
+library(randomForest)
+
+rf_tune_grid <- 
+  data.frame(mtry = seq(3, 5, 8), 
+           splitrule = "variance",
+           min.node.size = 5)
+set.seed(123)
+drug_overdose_rf <- train(drug_overdose_deaths ~ ., data = train,
+        method = "ranger", num.trees = 500,
+        trControl = trainControl(method = "cv", number = 10),
+        tuneGrid = rf_tune_grid, importance="impurity")
+
+drug_overdose_rf # gives in sample evaluation 12.08305 (average across all 10 test folds)
+predictions = predict(drug_overdose_rf, newdata=test) # predicted drug overdose deaths for all the counties
+
+
+RMSE_test = sqrt(mean((test$drug_overdose_deaths - predictions)^2)) # out of sample evaluation is 13.46791
+RMSE_test
+
+pdp_american<-drug_overdose_rf |>
+  pdp::partial(pred.var="american_indian_or_alaska_native") |>
+  autoplot()
+
+# cutoff 8%
+pdp_unemployment<-drug_overdose_rf |>
+  pdp::partial(pred.var="employment") |>
+  autoplot()
+
+pdp_adult_smoking<-drug_overdose_rf |>
+  pdp::partial(pred.var="adult_smoking") |>
+  autoplot()
+
+pdp_children<-drug_overdose_rf |>
+  pdp::partial(pred.var="children_in_single_parent_households") |>
+  autoplot()
+
+plot_hispanic <- autoplot(pdp_hispanic)
+plot_american_indian_or_alaska_native <- autoplot(pdp_american)
+plot_unemployment <- autoplot(pdp_unemployment)
+plot_adult_smoking <- autoplot(pdp_adult_smoking)
+
+
 
 grid_pdp<-grid.arrange(plot_american_indian_or_alaska_native,
              plot_unemployment, plot_adult_smoking, pdp_children, ncol = 2)
