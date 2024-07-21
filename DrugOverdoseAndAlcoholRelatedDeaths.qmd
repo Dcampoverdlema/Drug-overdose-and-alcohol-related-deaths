@@ -230,23 +230,16 @@ ggplot(filtered_data, aes(x = adult_smoking_raw_value, y = drug_overdose_deaths_
 ```
 **Figure 3**, which is broken down by income level, shows the correlation between adult smoking rates and the number of drug overdose deaths per 100,000 people. The trend line shows a positive association, implying that there is a connection between an increase in drug overdose deaths and rising smoking rates. Dark red areas are low-income areas, which tend to cluster in the higher ranges of both smoking rates and overdose deaths. High-income areas, indicated in dark blue, on the other hand, typically have lower smoking rates and fewer overdose deaths.
 
-Lets take a deeper look into Montana Alcohol imparaierd driving deaths by counties: 
-
-```{r}
-#Jodie add graph here!!! >:(
-```
-
-add your description keep it formal >:(
 
 
 # Modeling
 
-To eventually uncover the predictors, the first step is to conduct a regression analysis. This can assist in deciding which variables should be taken into consideration and which ones not. First, finding the best regression model for the data is essential, as this can help achieve more accurate results.
+To eventually uncover the predictors, the first step is to conduct a regression analysis. This can assist in deciding which variables should be taken into consideration and which ones not. First, finding the best regression model for the data is essential, as this can help achieve more accurate results. In our analysis, we chose Ridge, Lasso, Elastic Net, Linear Regression, and Random Forest models for their complementary strengths and their ability to address various aspects of our data. Linear regression serves as a foundation for comprehending the linear relationships between the response variable and our predictors. Ridge and Lasso regression are methods that assist in the mitigation of multicollinearity by imposing regularization penalties. Ridge is designed to reduce the magnitude of coefficients, while Lasso has the potential to set certain coefficients to zero for feature selection. Elastic Net is a balanced approach to variable selection and regularization that incorporates the strengths of both Ridge and Lasso. Finally, Random Forest, an ensemble method, is a potent instrument for managing intricate datasets due to its ability to capture non-linear relationships and interactions between variables, which provides both flexibility and robustness. We are able to identify the most effective predictive techniques and obtain a deeper understanding of the underlying patterns by conducting a comprehensive evaluation of our data using these diverse models.
 
 
 **K-Fold Cross-Validation** 
 
-This is a good way to check that the data is correct: the original data is randomly split into k equal parts. The model is trained with k-1 parts, and one part is set away to test it. This process is done k times, with a new part being tested each time. Finally, the scores from all k tests are added together to get a single estimate of how well the program worked.
+This is a good way to check that the data is correct: the original data is randomly split into k equal parts. The model is trained with $k-1$ parts, and one part is set away to test it. This process is done $k$ times, with a new part being tested each time. Finally, the scores from all k tests are added together to get a single estimate of how well the program worked.
 
 **Steps Taken:**
 
@@ -330,9 +323,7 @@ test_pred_all |>
   )
 ```
 
-In **Figure 4**, Random Forest model had the lowest RMSE, which meant it was the most accurate to find our predictors
-
-Now we are going to do the same K - cross validation to find best models for alcohol impaired driving deaths.
+We chose Random Forest for predicting drug overdose deaths because it demonstrated lower and more consistent RMSE values compared to other models, as shown in **Figure 4**. Its ability to capture complex, non-linear relationships makes it particularly effective for this analysis.
 
 ```{r}
 
@@ -403,11 +394,8 @@ test_pred_all |>
 
 ```
 
-In **Figure 5**,the linear model has the least amount of error compared to the others but could make an argument to use other models like random forest to find predictors. 
+We chose the Linear model for predicting alcohol-impaired driving deaths because it demonstrated the lowest and most consistent RMSE values, as shown in **Figure 5**. However, given the overlapping error margins with other models, one could argue for the use of alternative methods, as no single model shows a clear advantage.
 
-```{r}
-
-```
 
 # Results
 
@@ -419,7 +407,7 @@ alcohol_lm <- lm(alcohol_impaired_driving_deaths ~ . , data=health_data_alc)
 
 alcohol_lm |>
   tidy(conf.int = T) |>
-  
+  filter(term != "test_fold") |> 
   mutate(
     term = gsub("_", " ", term),
     term = sapply(term, function(x) { paste(toupper(substring(x, 1, 1)), substring(x, 2), sep = "", collapse = " ") }), 
@@ -455,8 +443,6 @@ alcohol_lm |>
 ```
 By looking at **Figure 6**, Unemployment is the top predictor for alcohol impaired driving deaths. Then if everything is constant, if unemployment rate increases by 1%, alcohol impaired driving deaths is projected to increase by 1.3%. Other significant predictors are Excessive Drinking, Suicides, and Population Density.  
 
-
-Now onto drug overdose deaths we are going to use random forest to find our predictors: 
 
 ```{r, include = FALSE}
 
@@ -610,11 +596,6 @@ final_drug_rf <-ranger(drug_overdose_deaths ~ ., data = train, num.trees=500, mt
 
 Jodie analysis right here
 
-```{r}
-
-
-
-```
 
 # Discussion
 
@@ -626,9 +607,11 @@ Further research from the American Addiction Center indicates that substance abu
 
 ## Ways to Reduce Unemployment
 
-**Career pathways programs:** Programs for career pathways provide low-skilled people with occupation-specific training for higher-skilled roles in rapidly expanding industries including information technology, advanced manufacturing, and health care. These programs integrate social services with academic and technical education; many also include work experience. 
+**Career pathways programs:** Programs for career pathways provide low-skilled people with occupation-specific training for higher-skilled roles in rapidly expanding industries including information technology, advanced manufacturing, and health care. These programs integrate social services with academic and technical education; many also include work experience ("Building Strong Middle-Class Career Pathways Programs").
 
-**Summer youth employment programs:** Summer youth employment programs give young people, often between the ages of 14 and 24, temporary jobs. Program organizers typically provide financial support for positions, and programs are managed by nonprofits or government organizations. Private sector businesses, on the other hand, could offer more competitive placements and pay participants directly. Programs may incorporate extra supports, such a work-readiness curriculum, and typically center on giving underprivileged youngsters options.
+**Summer youth employment programs:** Summer youth employment programs give young people, often between the ages of 14 and 24, temporary jobs. Program organizers typically provide financial support for positions, and programs are managed by nonprofits or government organizations. Private sector businesses, on the other hand, could offer more competitive placements and pay participants directly. Programs may incorporate extra supports, such a work-readiness curriculum, and typically center on giving underprivileged youngsters options (“Youth Employment Programs”).
+
+**Providing a generous tax credit for companies:** This will incentivize job creation by reducing the financial burden of hiring additional workers. This encourages businesses to expand their workforce, thereby reducing overall unemployment rates (Lerman).
 
 
 # Conclusion 
@@ -641,16 +624,22 @@ While researching the topic, it was found that men are more likely to overdose o
 (insert  more limitations)
 
 
-# Reference
+# References
 
 “Alcohol and Drug Abuse Statistics (Facts About Addiction).” American Addiction Centers, https://americanaddictioncenters.org/addiction-statistics. Accessed July 2024.
+
+“Building Strong Middle-Class Career Pathways Programs.” Center for American Progress, https://www.americanprogress.org/article/building-strong-middle-class-career-pathways-programs/. Accessed 21 July 2024.
 
 Generes, Wendy Manwarren. “Recession, Unemployment, and Drug Addiction: What's the Link?” American Addiction Centers, 21 June 2024, https://americanaddictioncenters.org/blog/recession-unemployment-and-drug-addiction-whats-the-link. Accessed July 2024.
 
 “Health Data.” County Health Rankings, https://www.countyhealthrankings.org/health-data. Accessed July 2024.
 
+Lerman, Robert I. “Five Steps to Cut Unemployment.” Urban Institute, 4 Oct. 2011, https://www.urban.org/urban-wire/five-steps-cut-unemployment. Accessed 21 July 2024.
+
 “The West Virginia Drug Situation.” DEA.gov, https://www.dea.gov/sites/default/files/2018-07/DEA-WAS-DIR-024-17%20West%20Virginia%20Drug%20Situation%20-UNCLASSIFIED.pdf. Accessed July 2024.
 
 “Worst States For Drunk Driving In 2024 – Forbes Advisor.” Forbes, 3 May 2024, https://www.forbes.com/advisor/car-insurance/worst-states-for-drunk-driving/. Accessed July 2024.
+
+“Youth Employment Programs.” Youth.gov, https://youth.gov/feature-article/supporting-summer-youth-employment-programs. Accessed 21 July 2024.
 
 “2023 County Profiles Executive Summary Report.” West Virginia Department of Health and Human Resources. https://dhhr.wv.gov/vip/county-reports/Pages/2023-CSMP-Surveillance-Reports.aspx. Accessed July 2024.
