@@ -72,6 +72,13 @@ health <- read_csv("data/final_data.csv")
 drugs_df <- health |> 
   select(-name, -...1, -population_density, -population, -alcohol_impaired_driving_deaths, -homicides, -excessive_drinking) 
 
+drugs_df <- health |> # select 5 predictors 
+  select(unemployment, median_household_income, children_in_single_parent_households, adult_smoking, disconnected_youth, drug_overdose_deaths, homicides) 
+
+drugs_df <- health |> # select 5 predictors 
+  select(unemployment, median_household_income, adult_smoking, suicides, drug_overdose_deaths) 
+
+
 
 drugs_df |>  summarise(across(everything(), ~ sum(is.na(.))))
 
@@ -171,32 +178,40 @@ library(gridExtra)
 #   pdp::partial(pred.var="hispanic") |>
 #   autoplot()
 
-pdp_american<-drug_overdose_rf |>
-  pdp::partial(pred.var="american_indian_or_alaska_native") |>
-  autoplot()
+# pdp_american<-drug_overdose_rf |>
+#   pdp::partial(pred.var="american_indian_or_alaska_native") |>
+#   autoplot()
 
 # cutoff 8%
 pdp_unemployment<-drug_overdose_rf |>
   pdp::partial(pred.var="unemployment") |>
   autoplot()
 
+pdp_unemployment<-pdp_unemployment +
+  labs(x = "unemployment rate", y="predicted drug overdose deaths")
+
 pdp_adult_smoking<-drug_overdose_rf |>
   pdp::partial(pred.var="adult_smoking") |>
   autoplot()
 
-pdp_children<-drug_overdose_rf |>
-  pdp::partial(pred.var="children_in_single_parent_households") |>
+pdp_suicides<-drug_overdose_rf |>
+  pdp::partial(pred.var="suicides") |>
   autoplot()
 
-plot_hispanic <- autoplot(pdp_hispanic)
-plot_american_indian_or_alaska_native <- autoplot(pdp_american)
+pdp_income<-drug_overdose_rf |>
+  pdp::partial(pred.var="median_household_income") |>
+  autoplot()
+
+#plot_hispanic <- autoplot(pdp_hispanic)
+#plot_hispanic <- autoplot(pdp_hispanic)
+plot_suicides <- autoplot(pdp_suicides)
+plot_income <- autoplot(pdp_income)
 plot_unemployment <- autoplot(pdp_unemployment)
 plot_adult_smoking <- autoplot(pdp_adult_smoking)
 
 
 
-grid_pdp<-grid.arrange(plot_american_indian_or_alaska_native,
-             plot_unemployment, plot_adult_smoking, pdp_children, ncol = 2)
+grid_pdp<-grid.arrange(plot_unemployment, plot_adult_smoking, plot_income, ncol = 3)
 grid_pdp
 
 # plot_adult_smoking + labs(x = 'Adsd') to relabel the axes
@@ -271,19 +286,168 @@ grid_pdp
 
 ```
 
-## binning median income by state 
+## Mixed effects Model for Drug Overdose where random intercept is urban/rural counties (clustering by urban and rural counties)
 
 ```{r setup, include=FALSE}
 
-my_csv<-read_csv("data/jodie_data.csv") 
 # mixed effects model
 # drop homicides for later
 
 # create a new col called income_level with 4 levels--low, high, middle, upper middle, lower middle
 # effect of income level changes by state --random slope
-(1 + income | state) # and income could be continuous, making state a random variable
 
-(1|state)
+health_data <- read.csv("data/analytic_data2024.csv") |> 
+  slice(-1) |> 
+  clean_names() 
+
+sel_data<-health_data |>
+  rename(
+    Drug_Overdose_Deaths = drug_overdose_deaths_raw_value,
+    Alcohol_Impaired_Driving_Deaths = alcohol_impaired_driving_deaths_raw_value,
+    Unemployment_Rate = unemployment_raw_value,
+    Income_Inequality = income_inequality_raw_value,
+    Highschool_Comp_Rate = high_school_completion_raw_value,
+    Adult_Smoking_Rate = adult_smoking_raw_value,
+    Excessive_Drinking_Rate = excessive_drinking_raw_value,
+    Median_House_Income = median_household_income_raw_value,
+    College_Education_Rate = some_college_raw_value,
+    Children_In_Poverty = children_in_poverty_raw_value,
+    Single_Parent_House = children_in_single_parent_households_raw_value,
+    Social_Associations = social_associations_raw_value,
+    Pop_Under_18 = x_below_18_years_of_age_raw_value,
+    Pop_Over_65 = x_65_and_older_raw_value,
+    NH_Black = x_non_hispanic_black_raw_value,
+    American_Or_Alaska_Native = x_american_indian_or_alaska_native_raw_value,
+    Asian_Pop = x_asian_raw_value,
+    Pacific_Islander = x_native_hawaiian_or_other_pacific_islander_raw_value,
+    Hispanic_Pop = x_hispanic_raw_value,
+    NH_White = x_non_hispanic_white_raw_value,
+    English_Profic = x_not_proficient_in_english_raw_value,
+    Female_Pop = x_female_raw_value,
+    Rural_Pop = x_rural_raw_value
+  ) 
+
+selected_data <- sel_data|> 
+  select(
+    name, state_abbreviation, x5_digit_fips_code, x5_digit_fips_code, Drug_Overdose_Deaths, Alcohol_Impaired_Driving_Deaths,
+    Unemployment_Rate, Income_Inequality, Highschool_Comp_Rate, 
+    Adult_Smoking_Rate, Excessive_Drinking_Rate, Median_House_Income,
+    College_Education_Rate, Children_In_Poverty, Single_Parent_House,
+    Social_Associations, Pop_Under_18, 
+    Pop_Over_65, NH_Black, 
+    American_Or_Alaska_Native, Hispanic_Pop, 
+    Female_Pop, Rural_Pop, population_raw_value
+  ) |>
+  mutate(x5_digit_fips_code=ifelse(nchar(x5_digit_fips_code) == 4, paste0("0", x5_digit_fips_code), x5_digit_fips_code)) |>
+  mutate(across(c(Drug_Overdose_Deaths, Alcohol_Impaired_Driving_Deaths,
+    Unemployment_Rate, Income_Inequality, Highschool_Comp_Rate, 
+    Adult_Smoking_Rate, Excessive_Drinking_Rate, Median_House_Income,
+    College_Education_Rate, Children_In_Poverty, Single_Parent_House,
+    Social_Associations, Pop_Under_18, 
+    Pop_Over_65, NH_Black, 
+    American_Or_Alaska_Native, Hispanic_Pop, 
+    Female_Pop, Rural_Pop, population_raw_value), 
+    as.numeric
+  ))
+
+  
+  
+# selected_data <- selected_data |> 
+#   mutate(across(
+#     everything(),
+#     as.numeric
+#   ))
+
+library(tigris)
+#us_counties df is strictly 5 numbers while selected_data has 4 digits for nums less than 10000
+
+us_counties <- counties(cb = TRUE) # US COUNTIES, census_df have CA but selected_data doesn't have it (06037)
+census_df <- us_counties |> # issue with census df not having ca counties
+  select(x5_digit_fips_code=GEOID, land_area=ALAND)
+
+# Inner join: only rows with matching x5_digit_fips_code will be included
+new_sel <- merge(selected_data, census_df, by = "x5_digit_fips_code") |>
+  mutate(land_area_km = land_area / 1000000) |>
+  mutate(pop_den = population_raw_value / land_area_km) |>
+  mutate(urban_pop=1-Rural_Pop)
+  
+
+quantiles <- quantile(new_sel$urban_pop, probs = c(0, 0.33, 0.66, 1))
+
+# Display the quantiles
+print(quantiles)
+
+new_df <- new_sel |>
+  mutate(urban_level = ifelse(urban_pop==0, "rural", ifelse(urban_pop<0.52, "suburban", "urban"))) 
+
+# high school--completed at least high school diploma
+# some college--completed high school and pursued education after (not necessarily have to complete it)
+# union--% that did not complete (1-high school)
+
+# % of people under 18 in poverty (synonymous with income inequality)
+new_drugsdf <- new_df |>
+  select(-Alcohol_Impaired_Driving_Deaths, -Excessive_Drinking_Rate, 
+         -geometry, -land_area_km, -population_raw_value, -pop_den, 
+         -Rural_Pop, -urban_pop, -land_area, -Highschool_Comp_Rate,
+         -Pop_Under_18, -Pop_Over_65, -Children_In_Poverty)|>
+  mutate(across(c(Unemployment_Rate, Income_Inequality, Adult_Smoking_Rate, 
+                  Median_House_Income, College_Education_Rate, 
+                  Social_Associations, NH_Black, American_Or_Alaska_Native, Hispanic_Pop, Female_Pop), scale)) |>
+  mutate(income_ineq_level=ifelse(Income_Inequality<0.123, "low", "high")) |>
+  mutate(urban_num=as.numeric(factor(urban_level, levels = c("rural", "suburban", "urban")))) |>
+  drop_na(Drug_Overdose_Deaths) # omitted 20 rows?
+
+
+library(lme4)
+random_urban <-lmer(Drug_Overdose_Deaths~Unemployment_Rate + Income_Inequality + Median_House_Income + Adult_Smoking_Rate + College_Education_Rate + Social_Associations + Female_Pop + (1|urban_level), data=new_drugsdf)
+
+fixed_no_urban <-lm(Drug_Overdose_Deaths~Unemployment_Rate + Income_Inequality + Median_House_Income + Adult_Smoking_Rate + College_Education_Rate + Social_Associations + Female_Pop, data=new_drugsdf)
+
+random_state <-lmer(Drug_Overdose_Deaths~Unemployment_Rate + Income_Inequality + Median_House_Income + Adult_Smoking_Rate + College_Education_Rate + Social_Associations + Female_Pop + (1|state_abbreviation), data=new_drugsdf)
+
+ggplot(aes(x = type, y = rmse)) + 
+  geom_point(size = 4) +
+  stat_summary(fun = mean, geom = "point", 
+               color = "red", size = 4) + 
+  stat_summary(fun.data = mean_se, geom = "errorbar", 
+               color = "red", width = 0.2)
+
+
+
+
+
+
+
+
+# urban_num has no effect since CI includes 0
+fixed_urban<-lm(Drug_Overdose_Deaths~Unemployment_Rate + Income_Inequality + Median_House_Income + Adult_Smoking_Rate + College_Education_Rate + Social_Associations + Female_Pop + urban_num, data=new_drugsdf)
+
+confint(fixed_urban)
+
+random_state <-lmer(Drug_Overdose_Deaths~Unemployment_Rate + Income_Inequality + Median_House_Income + Adult_Smoking_Rate + College_Education_Rate + Social_Associations + Female_Pop + (1|state_abbreviation), data=new_drugsdf)
+
+library(phia)
+model_inter<-aov(Drug_Overdose_Deaths~factor(income_ineq_level)*factor(urban_level), data=new_drugsdf)
+inter_plot<-interactionMeans(model_inter)
+plot(inter_plot)
+par(mfrow=c(1, 2)) # no interaction between income inequality level and urban_level; 
+
+
+anova(random_urban, fixed_no_urban) # likelihood ratio test--> look for lower AIC and lower BIC 
+
+# random_urban_one <-lmer(Drug_Overdose_Deaths~Unemployment_Rate + (1 |state_abbreviation), data=new_drugsdf)
+
+random_state <-lmer(Drug_Overdose_Deaths~Unemployment_Rate + Income_Inequality + Median_House_Income + Adult_Smoking_Rate + College_Education_Rate + Social_Associations + Female_Pop + (1|state_abbreviation), data=new_drugsdf)
+
+# intercept and slope of lines should be different 
+# maybe median_house_income * urban_yes
+
+summary(random_urban)
+
+# use new_df 
+#(1 + income | state) # and income could be continuous, making state a random variable
+
+#(1|state)
 
 
 new_csv<-my_csv |> 
@@ -306,26 +470,156 @@ final_data<-read_csv("data/final_data.csv")
 # variability
 # or do we want 
 
-# effect of predictor on response varies by state--> use mixed model
-my_csv |>
-  drop_na(drug_overdose_deaths) |>
-  select(state_abbreviation, drug_overdose_deaths) |>
-  group_by(state_abbreviation) |>
-  mutate(mean_drugover_by_state = mean(drug_overdose_deaths)) |>
-  select(mean_drugover_by_state) |>
-  unique() |>
-  summary()
   
 ```
 
-## R Markdown
-
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+## Create graphs comparing the performances 
 
 ```{r cars}
-summary(cars)
+# drugs_df2 <- new_drugsdf |>
+#   mutate(employment = 1-unemployment)
+new_drugsdf <- new_drugsdf |>
+  select(Drug_Overdose_Deaths, Unemployment_Rate, Income_Inequality, Median_House_Income, Adult_Smoking_Rate, College_Education_Rate, Social_Associations, Female_Pop, urban_level) |>
+  drop_na()
+
+train<-new_drugsdf |>
+  slice_sample(prop=0.5)
+test<-new_drugsdf|>
+  anti_join(train)
+
+x_train<- train |>
+  select(-Drug_Overdose_Deaths) |>
+  as.matrix()
+
+x_test <- test |>
+  select(-Drug_Overdose_Deaths) |>
+  as.matrix()
+
+library(tidyverse)
+library(ranger)
+library(randomForest)
+
+library(caret)
+
+random_urban <-lmer(Drug_Overdose_Deaths~Unemployment_Rate + Income_Inequality + Median_House_Income + Adult_Smoking_Rate + College_Education_Rate + Social_Associations + Female_Pop + (1|urban_level), data=new_drugsdf)
+
+fixed <-lm(Drug_Overdose_Deaths~Unemployment_Rate + Income_Inequality + Median_House_Income + Adult_Smoking_Rate + College_Education_Rate + Social_Associations + Female_Pop, data=new_drugsdf)
+
+random_state <-lmer(Drug_Overdose_Deaths~Unemployment_Rate + Income_Inequality + Median_House_Income + Adult_Smoking_Rate + College_Education_Rate + Social_Associations + Female_Pop + (1|state_abbreviation), data=new_drugsdf)
+
+
+################training#####################
+# Define the training control for cross-validation
+
+new_drugsdf <- new_drugsdf |>
+  mutate(test_fold = sample(rep(1:5, length.out = n())))
+
+rf_tune_grid <- 
+  data.frame(mtry = seq(3, 5, 8), 
+           splitrule = "variance",
+           min.node.size = 5)
+set.seed(123)
+drug_overdose_rf <- train(Drug_Overdose_Deaths ~ ., data = train,
+        method = "ranger", num.trees = 500,
+        trControl = trainControl(method = "cv", number = 5),
+        tuneGrid = rf_tune_grid, importance="impurity")
+
+drug_overdose_rf # gives in sample evaluation 12.08305 (average across all 10 test folds)
+predictions = predict(drug_overdose_rf, newdata=test)
+test_rf = sqrt(mean((test$Drug_Overdose_Deaths - predictions)^2)) # out of sample evaluation is 13.46791
+test_rf
+
+# get_test_pred <- function(k) {
+#   test_data <- new_drugsdf |>  filter(test_fold == k)                     # get test and training data
+#   train_data <- new_drugsdf |>  filter(test_fold != k)
+#   test_x <- as.matrix(select(test_data, -Drug_Overdose_Deaths))            # get test and training matrices
+#   train_x <- as.matrix(select(train_data, -Drug_Overdose_Deaths))
+#   
+#   lm_fixed <- lm(Drug_Overdose_Deaths~Unemployment_Rate + Income_Inequality + Median_House_Income + Adult_Smoking_Rate + College_Education_Rate + Social_Associations + Female_Pop, data = train_data)                  # fit models to training data
+#   lm_rand_urban <- lmer(Drug_Overdose_Deaths~Unemployment_Rate + Income_Inequality + Median_House_Income + Adult_Smoking_Rate + College_Education_Rate + Social_Associations + Female_Pop + (1|urban_level), data=train_data)
+#   lm_rand_state <- lmer(Drug_Overdose_Deaths~Unemployment_Rate + Income_Inequality + Median_House_Income + Adult_Smoking_Rate + College_Education_Rate + Social_Associations + Female_Pop + (1|state_abbreviation), data=train_data)
+# 
+#   # rf_fit <- randomForest(drug_overdose_deaths ~ ., data = train_data, importance = TRUE)
+#   tibble(lm_pred = predict(lm_fixed, newdata = test_data),              # return test results
+#          lm_rand_urban = predict(lm_rand_urban, newdata = test_data),
+#          lm_rand_state = predict(lm_rand_state, newdata = test_data),
+#          rf = predict(drug_overdose_rf, newdata=test),
+#          rf_pred = predict(rf_fit, newdata = test_data),
+#          test_actual = test_data$drug_overdose_deaths,
+#          test_fold = k)
+# }
+
+train_control <- trainControl(method = "cv", number = 5)
+
+
+fixed_ml <- train(Drug_Overdose_Deaths~Unemployment_Rate + Income_Inequality + Median_House_Income + Adult_Smoking_Rate + College_Education_Rate + Social_Associations + Female_Pop,
+                  data=train, method="lm", trControl=train_control)
+
+pred_fixed <- predict(fixed_ml, newdata=test)
+test_fixed = sqrt(mean((test$Drug_Overdose_Deaths - pred_fixed)^2)) # out of sample evaluation is 13.46791
+test_fixed
+
+loocv_linear <- function(i, formula) {
+  
+  train_data <- new_drugsdf[-i, ]
+  test_data <- new_drugsdf[i, , drop = FALSE]
+  
+  model <- lmer(formula, data = train_data)
+  pred <- predict(model, newdata = test_data)
+  
+  return((test_data$Drug_Overdose_Deaths - pred)^2)
+}
+
+# for bootstrapping
+library(boot)
+rmse_function <- function(data, indices) {
+  boot_data <- data[indices, ] # Sample with replacement
+  squared_errors <- sapply(1:nrow(boot_data), loocv_linear)
+  return(sqrt(mean(squared_errors)))
+}
+  
+
+randurb_form<-Drug_Overdose_Deaths~Unemployment_Rate + Income_Inequality + Median_House_Income + Adult_Smoking_Rate + College_Education_Rate + Social_Associations + Female_Pop + (1|urban_level)
+
+sq_error_randurb<-sapply(1:nrow(new_drugsdf), loocv_mixed, formula=randurb_form)
+rmse_randurb=sqrt(mean(sq_error_randurb)) # 14.91057
+
+# Bootstrapping
+set.seed(123)
+results <- boot(data = new_drugsdf, statistic = rmse_function, R = 1000)
+
+#loocv_mixed(new_drugsdf, randurb_form)
+
+
+# doesn't work for cross-fold validation so try leave one out cross fold validation
+random_urban <- train(Drug_Overdose_Deaths~Unemployment_Rate + Income_Inequality + Median_House_Income + Adult_Smoking_Rate + College_Education_Rate + Social_Associations + Female_Pop + (1|urban_level),
+                  data=train, method="lmer", trControl=train_control)
+
+pred_urban_rand <- predict(fixed_ml, newdata=test)
+test_urban_rand = sqrt(mean((test$Drug_Overdose_Deaths - pred_urban_rand)^2)) # out of sample evaluation is 13.46791
+test_urban_rand # 14.91057 for urban as a random variable
+
+
+
+rf_tune_grid <- 
+  data.frame(mtry = seq(3, 5, 8), 
+           splitrule = "variance",
+           min.node.size = 5)
+set.seed(123)
+drug_overdose_rf <- train(Drug_Overdose_Deaths ~ ., data = train,
+        method = "ranger", num.trees = 500,
+        trControl = trainControl(method = "cv", number = 10),
+        tuneGrid = rf_tune_grid, importance="impurity")
+
+drug_overdose_rf # gives in sample evaluation 12.08305 (average across all 10 test folds)
+predictions = predict(drug_overdose_rf, newdata=test) # predicted drug overdose deaths for all the counties
+
+
+RMSE_test = sqrt(mean((test$drug_overdose_deaths - predictions)^2)) # out of sample evaluation is 13.46791
+RMSE_test
+
+
+
 ```
 
 ## Including Plots
