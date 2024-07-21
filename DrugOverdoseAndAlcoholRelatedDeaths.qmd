@@ -21,7 +21,7 @@ execute:
 
 In 2022, 46.8 million Americans who were twelve years of age or older struggled with a drug use disorder.  Eight million Americans aged twelve and older battled alcohol and drug use issues at the same time that year.  Use of drugs and alcohol has substantial financial consequences. Every year, excessive alcohol use costs 249 billion dollars in lost productivity, medical expenditures, and criminal justice costs. In contrast, illicit drug usage costs 193 billion dollars in lost productivity, criminality, and medical costs. Communities can benefit from adopting and putting into practice policies that lessen prescription drug abuse and excessive alcohol consumption.
 
-From the research, the question we are going to answer, is there demographic and social factors that are predictors of drug overdose and alcohol-related incidents (e.g., driving accidents)?
+From this information, the question we are going to answer, is there demographic and social factors that are predictors of drug overdose and alcohol-related incidents (e.g., driving accidents)?
 
 Our hypothesis we came to is, the chances of drug overdoses and alcohol-related driving incidents can be predicted by demographic factors like age, gender, and race as well as social factors like substance use habits and socioeconomic status. 
 
@@ -621,7 +621,6 @@ Further research from the American Addiction Center indicates that substance abu
 In the future, identifying comparable datasets to impute data from and using methods such as k-nearest neighbors (KNN) or grouping by state to fill in the missing data will be prioritized. This approach will enhance data completeness and improve the accuracy of subsequent analyses.
 
 While researching the topic, it was found that men are more likely to overdose on drugs. However, the dataset did not provide any information on the male population. Consequently, males could not be used as a demographic predictor. Additionally there was a lot of missing data 
-(insert  more limitations)
 
 
 # References
