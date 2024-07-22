@@ -473,13 +473,13 @@ final_data<-read_csv("data/final_data.csv")
   
 ```
 
-## Create graphs comparing the performances 
+## Compare regression models using AIC
 
 ```{r cars}
 # drugs_df2 <- new_drugsdf |>
 #   mutate(employment = 1-unemployment)
 new_drugsdf <- new_drugsdf |>
-  select(Drug_Overdose_Deaths, Unemployment_Rate, Income_Inequality, Median_House_Income, Adult_Smoking_Rate, College_Education_Rate, Social_Associations, Female_Pop, urban_level) |>
+  select(Drug_Overdose_Deaths, Unemployment_Rate, Income_Inequality, Median_House_Income, Adult_Smoking_Rate, College_Education_Rate, Social_Associations, Female_Pop, urban_level, urban_num, state_abbreviation) |>
   drop_na()
 
 train<-new_drugsdf |>
@@ -501,11 +501,120 @@ library(randomForest)
 
 library(caret)
 
+fixed_no_urban <-lm(Drug_Overdose_Deaths~Unemployment_Rate + Income_Inequality + Median_House_Income + Adult_Smoking_Rate + College_Education_Rate + Social_Associations + Female_Pop, data=new_drugsdf)
+
+fixed_urban <-lm(Drug_Overdose_Deaths~Unemployment_Rate + Income_Inequality + Median_House_Income + Adult_Smoking_Rate + College_Education_Rate + Social_Associations + Female_Pop + urban_num, data=new_drugsdf)
+
 random_urban <-lmer(Drug_Overdose_Deaths~Unemployment_Rate + Income_Inequality + Median_House_Income + Adult_Smoking_Rate + College_Education_Rate + Social_Associations + Female_Pop + (1|urban_level), data=new_drugsdf)
 
-fixed <-lm(Drug_Overdose_Deaths~Unemployment_Rate + Income_Inequality + Median_House_Income + Adult_Smoking_Rate + College_Education_Rate + Social_Associations + Female_Pop, data=new_drugsdf)
+random_state <-lmer(Drug_Overdose_Deaths~Unemployment_Rate + Income_Inequality + Median_House_Income + Adult_Smoking_Rate + College_Education_Rate + Social_Associations + Female_Pop + urban_num + (1|state_abbreviation), data=new_drugsdf)
 
-random_state <-lmer(Drug_Overdose_Deaths~Unemployment_Rate + Income_Inequality + Median_House_Income + Adult_Smoking_Rate + College_Education_Rate + Social_Associations + Female_Pop + (1|state_abbreviation), data=new_drugsdf)
+# random_state with log transformation
+random_state_log <-lmer(log(Drug_Overdose_Deaths)~Unemployment_Rate + Income_Inequality + Median_House_Income + Adult_Smoking_Rate + College_Education_Rate + Social_Associations + Female_Pop + urban_num + (1|state_abbreviation), data=new_drugsdf)
+
+random_urban_log <-lmer(log(Drug_Overdose_Deaths)~Unemployment_Rate + Income_Inequality + Median_House_Income + Adult_Smoking_Rate + College_Education_Rate + Social_Associations + Female_Pop + (1|urban_level), data=new_drugsdf)
+
+# select random_state
+
+arm::plot(fitted(random_state), residuals(random_state))
+# random_state_inter_income_smoking <-lmer(Drug_Overdose_Deaths~Unemployment_Rate + Income_Inequality + Median_House_Income*Adult_Smoking_Rate + College_Education_Rate + Social_Associations + Female_Pop + urban_num + (1|state_abbreviation), data=new_drugsdf)
+
+library(car)
+vif(random_state)
+# strong correlation between median household income and adult smoking rate 
+
+# state is random intercept, interact female with urban_num
+# inter_fem_urban_num <-lmer(Drug_Overdose_Deaths~Unemployment_Rate + Income_Inequality + Median_House_Income + Adult_Smoking_Rate + College_Education_Rate + Social_Associations + Female_Pop*urban_num + (1|state_abbreviation), data=new_drugsdf)
+
+AIC(fixed_no_urban, fixed_urban, random_urban, random_state) # random_state does the best
+confint(random_state, method="boot")
+ranef_model <- ranef(random_state, condVar=TRUE) # random_effects--state intercept
+
+library(arm)
+se_ranef <- se.ranef(random_state)
+
+# Extract standard deviations for the random effects
+sd_ranef <- lapply(se_ranef, function(x) sqrt(diag(x)))
+
+# Calculate confidence intervals for random effects
+conf_intervals <- lapply(ranef_model, function(re, sd_re) {
+  re_lwr <- re - 1.96 * sd_re
+  re_upr <- re + 1.96 * sd_re
+  return(data.frame(Lower=as.vector(re_lwr), Upper=as.vector(re_upr)))
+}, sd_ranef)
+
+
+# grpah wtih the summary estimates and coefficients
+# AIC score has to be at least 2 units lower compared to the other model for it to be significant enough.
+
+# visualization of the AIC (for later) --delta aic 
+
+# install.packages("lmerTest")
+library(lmerTest)
+
+model_random_state = summary(random_state)
+coefficients <- c(9.4, 12.473, model_random_state$coefficients[, 1]) 
+conf_intervals <- confint(random_state, level = 0.95, oldNames=FALSE)
+
+coef_df <- data.frame(
+  Predictor = c('Std Dev estimate', 'Sigma', 'Fixed Intercept', 'Unemployment Rate', 'Income Inequality',
+                'Median Income', 'Smoking Rate', 'College Education Rate', 
+                'Social Associations', '% Female', 'Urbanization'),
+  Estimate = coefficients,
+  #StdError = coefficients[, "Std. Error"],
+  ConfLow = conf_intervals[, "2.5 %"],
+  ConfHigh = conf_intervals[, "97.5 %"]
+)
+coef_df<-coef_df[c(-2, -3, -4), ]
+new_row <- data.frame(
+  Predictor='Unemployment Rate',
+  Estimate = 1.8850,
+  ConfLow=1.0461464,
+  ConfHigh=2.7238723
+)
+coef_df<-rbind(coef_df, new_row)
+
+ggplot(coef_df, aes(x = Estimate, y = Predictor, xmin = ConfLow, xmax = ConfHigh)) +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "black") +
+  geom_errorbarh(height = 0.2, linewidth = 1.4, color = "red", show.legend = FALSE) +
+  geom_point(size = 1.5, shape = 21, fill = "black", show.legend = FALSE) +
+  labs(title = "Random Intercept (state) Linear Model for Drug Overdose Deaths",
+       x = "Coefficient Estimate",
+       y = "Predictors") +
+  labs(y = NULL) +
+  theme_bw() +
+  theme(
+    plot.title = element_text(size = 16),      # Title text size
+    axis.title.x = element_text(size = 14),                   # X-axis title text size
+    axis.title.y = element_text(size = 14),                   # Y-axis title text size
+    axis.text.x = element_text(size = 12),                    # X-axis text size
+    axis.text.y = element_text(size = 12),                    # Y-axis text size
+    legend.text = element_text(size = 12)                      # Legend text size
+  )
+  
+
+abline(v = 0, col = "black", lwd = 2, lty = 2)
+
+install.packages("lme4")
+install.packages("broom.mixed")
+library(lme4)
+library(broom.mixed)
+
+# create get estimates effects of state 
+
+# exclude fixed effects
+# create a plot that visualizes the different intercepts for random state
+coef_df<-
+
+tidy_model <- tidy(random_state, conf.int = TRUE)
+print(tidy_model)
+
+
+summary(inter_social_urban_num)
+confint(inter_social_urban_num)
+confint(random_state)
+
+## Evaluate the AIC for regression models
 
 
 ################training#####################
@@ -622,12 +731,53 @@ RMSE_test
 
 ```
 
-## Including Plots
+## New linear graph
 
 You can also embed plots, for example:
 
 ```{r pressure, echo=FALSE}
-plot(pressure)
+library(lmerTest)
+
+model_random_state = summary(random_state)
+coefficients <- c(9.4, 12.473, model_random_state$coefficients[, 1]) 
+conf_intervals <- confint(random_state, level = 0.95, oldNames=FALSE)
+
+coef_df <- data.frame(
+  Predictor = c('Std Dev estimate', 'Sigma', 'Fixed Intercept', 'Unemployment Rate', 'Income Inequality',
+                'Median Income', 'Smoking Rate', 'College Education Rate', 
+                'Social Associations', '% Female', 'Urbanization'),
+  Estimate = coefficients,
+  #StdError = coefficients[, "Std. Error"],
+  ConfLow = conf_intervals[, "2.5 %"],
+  ConfHigh = conf_intervals[, "97.5 %"]
+)
+coef_df<-coef_df[c(-2, -3, -4), ]
+new_row <- data.frame(
+  Predictor='Unemployment Rate',
+  Estimate = 1.8850,
+  ConfLow=1.0461464,
+  ConfHigh=2.7238723
+)
+coef_df<-rbind(coef_df, new_row)
+
+ggplot(coef_df, aes(x = Estimate, y = Predictor, xmin = ConfLow, xmax = ConfHigh)) +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "black") +
+  geom_errorbarh(height = 0.2, linewidth = 1.4, color = "red", show.legend = FALSE) +
+  geom_point(size = 1.5, shape = 21, fill = "black", show.legend = FALSE) +
+  labs(title = "Random Intercept (state) Linear Model for Drug Overdose Deaths",
+       x = "Coefficient Estimate",
+       y = "Predictors") +
+  labs(y = NULL) +
+  theme_bw() +
+  theme(
+    plot.title = element_text(size = 16),      # Title text size
+    axis.title.x = element_text(size = 14),                   # X-axis title text size
+    axis.title.y = element_text(size = 14),                   # Y-axis title text size
+    axis.text.x = element_text(size = 12),                    # X-axis text size
+    axis.text.y = element_text(size = 12),                    # Y-axis text size
+    legend.text = element_text(size = 12)                      # Legend text size
+  )
+  
 ```
 
 Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
