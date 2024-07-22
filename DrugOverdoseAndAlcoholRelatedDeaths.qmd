@@ -611,15 +611,20 @@ Further research from the American Addiction Center indicates that substance abu
 
 **Providing a generous tax credit for companies:** This will incentivize job creation by reducing the financial burden of hiring additional workers. This encourages businesses to expand their workforce, thereby reducing overall unemployment rates (Lerman).
 
+## Limitations
 
-# Conclusion 
+Since we are working with county level data, all individuals’ data in a county are simply averaged which might mask important granular differences within counties. This could be an issue especially for larger counties that have multiple urban and rural areas and are therefore more socioeconomically and demographically diverse. For example, Los Angeles County is huge (population-wise) with 88 cities and nearly as many unincorporated areas. All these areas have vastly different socioeconomic conditions, access to healthcare, education levels, and employment opportunities. Aggregating by county masks these differences and makes it hard to generalize our findings. Additionally, drug overdose rates could vary by state depending on how strict the regulations are on drugs accessibility.
+
+As the dataset had a lot of missing data on drug overdose deaths, we had to reduce our dataset from 3000 to 1000 observations. This increases variability in the data, leading to less precise parameter estimates.
+
+
+# Conclusion and Next Steps
 
 **The hypothesis is half correct. There are social predictors for alcohol-impaired driving deaths and drug overdoses, but there isn’t enough evidence from the results to justify demographic predictors**
 
-In the future, identifying comparable datasets to impute data from and using methods such as k-nearest neighbors (KNN) or grouping by state to fill in the missing data will be prioritized. This approach will enhance data completeness and improve the accuracy of subsequent analyses.
+To account for variability of drug overdoses, we can consider mixed effect models and try adding random intercept terms for state and urbanization level to effectively cluster the data by state or by urbanization level (rural, suburban, urban). This allows us to examine how geographic regions could impact the variability of baseline drug overdoses, highlighting more targeted and context-specific prevention and intervention programs.
 
-While researching the topic, it was found that men are more likely to overdose on drugs. However, the dataset did not provide any information on the male population. Consequently, males could not be used as a demographic predictor. Additionally there was a lot of missing data 
-
+In the future, identifying comparable datasets to impute data from and using methods such as k-nearest neighbors (KNN) or aggregating by state to fill in the missing data will be prioritized. This approach will enhance data completeness and reduce bias in our analyses.
 
 # References
 
