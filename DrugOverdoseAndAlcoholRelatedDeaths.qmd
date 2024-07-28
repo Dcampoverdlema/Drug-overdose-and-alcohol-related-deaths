@@ -19,9 +19,9 @@ execute:
 
 # Introduction
 
-In 2022, 46.8 million Americans who were twelve years of age or older struggled with a drug use disorder.  Eight million Americans aged twelve and older battled alcohol and drug use issues at the same time that year.  Use of drugs and alcohol has substantial financial consequences. Every year, excessive alcohol use costs 249 billion dollars in lost productivity, medical expenditures, and criminal justice costs. In contrast, illicit drug usage costs 193 billion dollars in lost productivity, criminality, and medical costs. Communities can benefit from adopting and putting into practice policies that lessen prescription drug abuse and excessive alcohol consumption.
+In 2022, 46.8 million Americans aged twelve years or older struggled with a drug use disorder. Also in 2022, eight million Americans aged twelve and older battled alcohol and drug use issues at the same time. The use of drugs and alcohol have substantial financial consequences. Every year, excessive alcohol use costs 249 billion dollars in lost productivity, medical expenditures, and criminal justice costs. Similarly, illicit drug usage costs 193 billion dollars in lost productivity, criminality, and medical costs. Communities can benefit from adopting and putting into practice policies that lessen prescription drug abuse and excessive alcohol consumption.
 
-From this information, the question we are going to answer, is there demographic and social factors that are predictors of drug overdose and alcohol-related incidents (e.g., driving accidents)?
+From this information, the question we are going to answer is: Are there demographic and social factors that are predictors of drug overdose and alcohol-related incidents (e.g., driving accidents)?
 
 Our hypothesis we came to is, the chances of drug overdoses and alcohol-related driving incidents can be predicted by demographic factors like age, gender, and race as well as social factors like substance use habits and socioeconomic status. 
 
@@ -84,7 +84,7 @@ health_data_drug <- na.omit(health_data_drug)
 
 ```
  
-Upon inspection, the variable of drug overdose deaths was found to have many N/A values, and it is important to ensure this variable is clean as it is one of the main variables to be analyzed. Additionally, rename the data so that it can be read easier and look presentable for any visuals. 
+Upon inspection, the variable of drug overdose deaths was found to have many N/A values, and it is important to ensure this variable is clean as it is one of the main variables to be analyzed. Additionally, renaming the data to be more readable and to be presentable for any visuals that will be created. 
 
 ```{r, include=FALSE} 
 
@@ -193,7 +193,7 @@ ggplot(data = merged_data, aes(x = long, y = lat, group = group)) +
 
 ```
 
-In **Figure 1**West Virginia has the highest amount of drug overdose deaths. By conducting further research on West Virginia, it was found that the state leads the nation in opioid-related drug overdose deaths. According to the Drug Enforcement Administration, West Virginia has one of the highest prescription rates for opioids in the country and also has a high prevalence of controlled prescription drug addiction and trafficking. Furthermore, the usage of illegal prescription drugs was a factor in almost 61% of state overdose deaths in 2015.
+In **Figure 1** West Virginia has the highest amount of drug overdose deaths. By conducting further research on West Virginia, it was found that the state leads the nation in opioid-related drug overdose deaths. According to the Drug Enforcement Administration, West Virginia has one of the highest prescription rates for opioids in the country and also has a high prevalence of controlled prescription drug addiction and trafficking. Furthermore, the usage of illegal prescription drugs was a factor in almost 61% of state overdose deaths in 2015.
 
 In **Figure 2** alcohol-impaired driving deaths, Montana had the highest amount of deaths resulting from alcohol-impaired driving. According to Forbes, Montana has the highest rate of drunk driving, with 8.57 fatal crashes involving drunk drivers for every 100,000 licensed drivers and 7.14 fatal crashes involving drunk drivers for every 100,000 state population. These rates are the highest in the country. Montana has the highest percentage of drunk drivers in the country—more than two-fifths (43.51%) of road fatalities.
 
@@ -394,7 +394,7 @@ test_pred_all |>
 
 ```
 
-We chose the Linear model for predicting alcohol-impaired driving deaths because it demonstrated the lowest and most consistent RMSE values, as shown in **Figure 5**. However, given the overlapping error margins with other models, one could argue for the use of alternative methods, as no single model shows a clear advantage.
+We chose the Linear Model for predicting alcohol-impaired driving deaths because it demonstrated the lowest and most consistent RMSE values, as shown in **Figure 5**. However, given the overlapping error margins with other models, one could argue for the use of alternative methods, as no single model shows a clear advantage.
 
 
 # Results
