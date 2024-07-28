@@ -49,6 +49,8 @@ selected_data <- health_data |>
     x_native_hawaiian_or_other_pacific_islander_raw_value, x_hispanic_raw_value, 
     x_non_hispanic_white_raw_value, x_not_proficient_in_english_raw_value,
     x_female_raw_value, x_rural_raw_value, long_commute_driving_alone_raw_value, population_raw_value, traffic_volume_raw_value, 
+    x_female_raw_value,
+    x_rural_raw_value,
     homicides_raw_value, homicides_numerator, homicides_denominator,
     suicides_raw_value, suicides_numerator, suicides_denominator,
     disconnected_youth_raw_value, disconnected_youth_numerator, 
@@ -71,6 +73,7 @@ selected_data <- selected_data |>
     starts_with("x_non_hispanic_white_raw_value") | starts_with("x_not_proficient_in_english_raw_value") | 
     starts_with("x_female_raw_value") | starts_with("x_rural_raw_value") | starts_with("population_raw_value") | starts_with("long_commute_driving_alone_raw_value") | starts_with("traffic_volume_raw_value") |
 starts_with("homicides") | starts_with("suicides") |
+  starts_with("x_rural") | starts_with("x_female") |
   starts_with("disconnected"),
     as.numeric
   )) 
@@ -970,7 +973,7 @@ p<-ggplot(MT_data, aes(x = unemployment_raw_value, y = alcohol_impaired_driving_
   geom_point(size = 2, alpha = 0.5, aes(color = `Income Level`)) +
   ggrepel::geom_text_repel(aes(label = income_label, color = `Income Level`), 
                            show.legend = F) +
-  geom_smooth(aes(color = `Income Level`), se=FALSE) +
+ # geom_smooth(aes(color = `Income Level`), se=FALSE) +
   scale_y_continuous(labels=scales::percent_format()) +
   scale_x_continuous(labels=scales::percent_format()) +
   labs(title = "In Montana, low income counties have higher unemployment rates \nand high alcohol deaths",
@@ -983,8 +986,8 @@ p + labs(caption = "*Restricting to counties with population > 3000")
 ```
 
 ```{r}
-MTND_data <-new_df |>
-  filter(state_abbreviation %in% c("ND"), population_raw_value > 3000) |>
+MT_data <-new_df |>
+  filter(state_abbreviation %in% c("MT"), population_raw_value > 3000) |>
   drop_na(alcohol_impaired_driving_deaths_raw_value) 
 
 # 2 bins

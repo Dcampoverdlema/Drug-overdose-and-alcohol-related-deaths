@@ -73,12 +73,17 @@ selected_data <- health_data |>
     Pop_Over_65, NH_Black, 
     American_Or_Alaska_Native, Hispanic_Pop, 
     Female_Pop, Rural_Pop, population_raw_value
-  )
-selected_data <- selected_data |> 
+  ) |>
   mutate(across(
     everything(),
     as.numeric
   ))
+  
+# selected_data <- selected_data |> 
+#   mutate(across(
+#     everything(),
+#     as.numeric
+#   ))
 
 library(tigris)
 us_counties <- counties(cb = TRUE)
@@ -93,7 +98,7 @@ new_df <- new_sel |>
   mutate(pop_den = population_raw_value / land_area_km)
 
 
-write.csv(new_df, "new_health.csv")
+write.csv(new_df, "df_new.csv")
 
 ```
 
