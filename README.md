@@ -67,11 +67,15 @@ This project investigates whether demographic and social factors can predict dru
 ## Repository Structure
 
 ```
-├── data/                  # Raw and processed datasets
-├── analysis/              # Final modeling scripts
-├── DrugOverdoseAndAlcoholRelatedDeaths.qmd   # Final report (Quarto)
-├── DrugOverdoseAndAlcoholRelatedDeaths.html  # Rendered report
-├── final_data.Rmd         # Final data preparation script
+├── data/                                         # Final processed dataset (final_data.csv)
+├── Chen/                                         # Jodie Chen's working scripts
+├── 2024 ranking measures/                        # Raw County Health Rankings data
+├── DrugOverdoseAndAlcoholRelatedDeaths_files/    # Auto-generated figures from Quarto render
+├── DrugOverdoseAndAlcoholRelatedDeaths.qmd       # Main report (Quarto) — all core analysis
+├── DrugOverdoseAndAlcoholRelatedDeaths.html      # Rendered final report
+├── cleaned_df.Rmd                                # Data cleaning script
+├── adult_smoking_vs_drug.png                     # Supporting figure
+├── .gitignore
 └── README.md
 ```
 
